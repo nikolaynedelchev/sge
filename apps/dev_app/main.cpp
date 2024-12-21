@@ -9,9 +9,10 @@
 
 int main()
 {
-
     glm::vec2 v1 = {0.5, 1.4};
     glm::vec2 v2 = {12.5, 1.6};
+
+
     auto dist = glm::distance(v1, v2);
     ndn::sge::engine eng;
     eng.init("./", 320, 200);

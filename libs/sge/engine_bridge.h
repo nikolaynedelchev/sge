@@ -2,6 +2,7 @@
 
 #include <string>
 #include "kbd_bridge.h"
+#include <glm/glm.hpp>
 
 namespace ndn::sge
 {
@@ -43,7 +44,7 @@ struct color
     constexpr color() = default;
     constexpr color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r),g(g),b(b),a(a){}
 };
-    
+
 struct point
 {
     float x = 0.0f;
