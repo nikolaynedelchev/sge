@@ -6,9 +6,19 @@
 #include <sge/sge.h>
 #include <glm/glm.hpp>
 #include <glm/geometric.hpp>
+namespace ndn::sudoku
+{
+void Solve();
+}
+
 
 int main()
 {
+
+    ndn::sudoku::Solve();
+
+
+    return 0;
     glm::vec2 v1 = {0.5, 1.4};
     glm::vec2 v2 = {12.5, 1.6};
 
