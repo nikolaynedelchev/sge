@@ -6,16 +6,12 @@
 #include <sge/sge.h>
 #include <glm/glm.hpp>
 #include <glm/geometric.hpp>
-namespace ndn::sudoku
-{
-void Solve();
-}
-
+#include "sudoku.h"
 
 int main()
 {
-
-    ndn::sudoku::Solve();
+    //ndn::sudoku::Solve();
+    ndn::sudoku::alg::Solve();
 
 
     return 0;

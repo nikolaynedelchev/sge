@@ -14,7 +14,7 @@ using uint = unsigned;
 #define CLR_BIT(n, b) n &= ~(BIT(b))
 
 
-uint8_t emptyMatrix[9][9] =
+uint8_t emptyMatrix[9][9] = // best 13, worst 30, av 18
 {
     {0,0,0,  0,0,0,  0,0,0},
     {0,0,0,  0,0,0,  0,0,0},
@@ -29,7 +29,7 @@ uint8_t emptyMatrix[9][9] =
     {0,0,0,  0,0,0,  0,0,0}
 };
 
-uint8_t matrix[9][9] =
+uint8_t matrix_3[9][9] = // best 27 worst 75 av 40
 {
         {0,0,8,  3,0,0,  0,6,0},
         {4,7,0,  0,0,0,  0,0,0},
@@ -44,6 +44,51 @@ uint8_t matrix[9][9] =
         {0,0,5,  1,0,0,  9,0,0}
 };
 
+uint8_t matrix_HARDEST[9][9] =  // best 1500, worst 2500, av 2000
+    {
+        {8,0,0,  0,0,0,  0,0,0},
+        {0,0,3,  6,0,0,  0,0,0},
+        {0,7,0,  0,9,0,  2,0,0},
+        //
+        {0,5,0,  0,0,7,  0,0,0},
+        {0,0,0,  0,4,5,  7,0,0},
+        {0,0,0,  1,0,0,  0,3,0},
+        //
+        {0,0,1,  0,0,0,  0,6,8},
+        {0,0,8,  5,0,0,  0,1,0},
+        {0,9,0,  0,0,0,  4,0,0}
+};
+
+uint8_t matrix_HARDEST_2[9][9] = // best 13, worst 30, av 18
+    {
+        {0,0,0,  0,0,0,  0,0,0},
+        {0,0,0,  0,0,3,  0,8,5},
+        {0,0,1,  0,2,0,  0,0,0},
+        //
+        {0,0,0,  5,0,7,  0,0,0},
+        {0,0,4,  0,0,0,  1,0,0},
+        {0,9,0,  0,0,0,  0,0,0},
+        //
+        {5,0,0,  0,0,0,  0,7,3},
+        {0,0,2,  0,1,0,  0,0,0},
+        {0,0,0,  0,4,0,  0,0,9}
+};
+
+uint8_t matrix_onlineJudge[9][9] = // best 13, worst 30, av 18
+    {
+        {0,7,0,1,8,0,4,0,0},
+        {9,0,0,0,0,3,0,0,6},
+        {0,0,1,9,0,0,0,0,0},
+        {0,0,4,0,0,8,9,0,2},
+        {1,0,0,0,6,0,0,0,3},
+        {2,0,7,4,0,0,6,0,0},
+        {0,0,0,0,0,1,2,0,0},
+        {7,0,0,8,0,0,0,0,4},
+        {0,0,9,0,5,2,0,3,0}
+};
+
+auto matrix = matrix_onlineJudge;
+
 struct
 {
     uint16_t rows[9];
@@ -51,7 +96,7 @@ struct
     uint16_t quadrants[9];
 }ctx;
 
-static void PrintMatrix()
+void PrintMatrix(uint8_t sudokuMatrix[9][9])
 {
     // ╔ ═ ╗ ║ ╚ ╝ ╬ ╦ ╩ ╣ ╠ ╤
     // ┌ ─ ┐ │ └ ┘ ┼ ┬ ┴ ┤ ├
@@ -83,7 +128,7 @@ static void PrintMatrix()
     for(auto& l : s)
     {
         if (l != 'x') continue;
-        l = '0' + matrix[r][c];
+        l = '0' + sudokuMatrix[r][c];
         if (l == '0') l = ' ';
         c++;
         if(c > 8)
@@ -154,6 +199,7 @@ static inline uint CountAvailable(uint r, uint c)
     return 9 - BitsCount(mask);
 }
 
+static int s_fail = 0;
 static bool Find()
 {
     int bestC = -1;
@@ -164,13 +210,15 @@ static bool Find()
         uint8_t* row = matrix[r];
         for(uint c = 0; c < 9; c++)
         {
-            if (row[c] == 0)
+            auto digit = row[c];
+            if (digit == 0)
             {
                 auto score = CountAvailable(r, c);
                 if (score < bestScore)
                 {
                     if (score == 0)
                     {
+                        s_fail++;
                         return false;
                     }
                     bestScore = score;
@@ -185,9 +233,11 @@ static bool Find()
         return true;
     }
     uint16_t usedNumbers = TakenMask(bestR, bestC);
+    uint16_t numMask = BIT(0);
     for(uint n = 1; n < 10; n++)
     {
-        if ((usedNumbers & BIT(n)) == 0)
+        numMask <<= 1;
+        if ((usedNumbers & numMask) == 0)
         {
             PutNumber(bestR, bestC, n);
             if (Find())
@@ -250,7 +300,8 @@ static bool CheckQuadrant(int qr, int qc)
 
 void Solve()
 {
-    PrintMatrix();
+    s_fail = 0;
+    PrintMatrix(matrix);
 
     tools::Stopwatch sw;
 
@@ -287,9 +338,9 @@ void Solve()
     }
     else
     {
-        fmt::println("Sudoku solved: {} micro seconds", duration);
+        fmt::println("Sudoku solved: {} micro seconds, fails: {}", duration, s_fail);
     }
-    PrintMatrix();
+    PrintMatrix(matrix);
 }
 
 
