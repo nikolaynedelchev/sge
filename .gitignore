@@ -22,6 +22,8 @@
 
 # Compiled Static libraries
 *.lai
+
+build/*
 *.la
 *.a
 *.lib
