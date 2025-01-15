@@ -39,16 +39,5 @@ Generic::Point<Precision, 2> Right(const Generic::Circle<Precision>& c) {return 
 template<typename Precision>
 Generic::Rect<Precision> Rectangle(const Generic::Circle<Precision>& c) {return Generic::Rect<Precision>{Generic::Point<Precision, 2>(c.pos - Generic::Vec<Precision, 2>{c.r, c.r}), Generic::Vec<Precision, 2>(2 * c.r, 2 * c.r)};};
 
-// Segment
-template<typename Precision>
-Generic::Point<Precision, 2> Up(const Generic::Segment<Precision>& s);
-template<typename Precision>
-Generic::Point<Precision, 2> Dn(const Generic::Segment<Precision>& s);
-template<typename Precision>
-Generic::Point<Precision, 2> Left(const Generic::Segment<Precision>& s);
-template<typename Precision>
-Generic::Point<Precision, 2> Right(const Generic::Segment<Precision>& s);
-template<typename Precision>
-Generic::Point<Precision, 2> Center(const Generic::Segment<Precision>& s);
 
 }
