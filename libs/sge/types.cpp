@@ -16,9 +16,6 @@ void test_fun()
 
     Circle2d c;
 
-    Ray2f r1 = {Point2f(0.0f, 5.0f), Point2f{3.0f, 6.0f}};
-    auto r2 = r1.RayBA();
-
     //rect.a
 }
 }

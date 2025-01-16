@@ -79,30 +79,18 @@ namespace ndn::sge
             using TypePrecision = Precision;
             using TypePoint = Point<TypePrecision, 2>;
 
-            TypePoint a, b;
-        };
+            TypePoint a;
+            TypePoint b;
 
-        template<typename Precision>
-        struct Ray : Line<Precision>
-        {
-            double AngleRad() const {return glm::atan(b.y - a.y, b.x - a.x);}
-            double AngleDeg() const {return glm::degrees(AngleRad());}
-            Ray RayBA() const {return Ray{b, a};}
-        };
+            double ABAngleRad() const {return glm::atan(b.y - a.y, b.x - a.x);}
+            double ABAngleDeg() const {return glm::degrees(ABAngleRad());}
+            double BAAngleRad() const {return glm::atan(a.y - b.y, a.x - b.x);}
+            double BAAngleDeg() const {return glm::degrees(BAAngleRad());}
 
-        template<typename Precision>
-        struct Segment : Line<Precision>
-        {
-            TypePoint Up() const;
-            TypePoint Dn() const;
-            TypePoint Left() const;
-            TypePoint Right() const;
-            TypePoint Center() const;
-            Precision Length() const;
-            Precision LengthSquared() const;
-            double LengthReal() const;
-            double LengthRealSquared() const;
-            const Ray<Precision>& RayAB() const {return *static_cast<Ray<Precision>*>(this);}
+            Precision ABLength() const;
+            Precision ABLengthSquared() const;
+            double ABLengthReal() const;
+            double ABLengthRealSquared() const;
         };
 
         template<typename Precision>
@@ -112,7 +100,7 @@ namespace ndn::sge
             using TypePoint = Point<TypePrecision, 2>;
             using TypeVec = Vec<TypePrecision, 2>;
             using TypeRect = Rect<TypePrecision>;
-            using TypeSegment = Segment<TypePrecision>;
+            using TypeLine = Line<TypePrecision>;
 
             TypePoint a, b, c;
 
@@ -127,7 +115,7 @@ namespace ndn::sge
             using TypePoint = Point<TypePrecision, 2>;
             using TypeVec = Vec<TypePrecision, 2>;
             using TypeRect = Rect<TypePrecision>;
-            using TypeSegment = Segment<TypePrecision>;
+            using TypeLine = Line<TypePrecision>;
 
             TypePoint a, b, c, d;
 
@@ -160,16 +148,6 @@ namespace ndn::sge
     using Line2f = Generic::Line<float>;
     using Line2d = Generic::Line<double>;
     using Line2 = Generic::Line<DefaultPrecision>;
-
-    using Ray2i = Generic::Ray<int>;
-    using Ray2f = Generic::Ray<float>;
-    using Ray2d = Generic::Ray<double>;
-    using Ray2 = Generic::Ray<DefaultPrecision>;
-
-    using Segment2i = Generic::Segment<int>;
-    using Segment2f = Generic::Segment<float>;
-    using Segment2d = Generic::Segment<double>;
-    using Segment2 = Generic::Segment<DefaultPrecision>;
 
     using Tri2i = Generic::Triangle<int>;
     using Tri2f = Generic::Triangle<float>;
