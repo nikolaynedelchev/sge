@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Добавяне на поддиректории
 add_subdirectory(thirdparty/fmt)
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/fmt)
+
 add_subdirectory(thirdparty/glm)
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/glm)
 
@@ -21,3 +23,4 @@ add_subdirectory(libs/tools)
 add_subdirectory(libs/sge)
 
 add_subdirectory(apps/dev_app)
+add_subdirectory(apps/pong)

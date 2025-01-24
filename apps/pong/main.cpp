@@ -6,19 +6,31 @@
 #include <sge/sge.h>
 #include <glm/glm.hpp>
 #include <glm/geometric.hpp>
-#include "sudoku.h"
+
+namespace ndn::pong
+{
+static sge::engine engine;
+
+void Init()
+{
+    engine.init("./", 640, 400);
+}
+
+void GameLoop()
+{
+
+}
+
+}
 
 int main()
 {
-    //ndn::sudoku::Solve();
-    ndn::sudoku::alg::Solve();
-
-
+    ndn::pong::Init();
+    ndn::pong::GameLoop();
     return 0;
+
     glm::vec2 v1 = {0.5, 1.4};
     glm::vec2 v2 = {12.5, 1.6};
-
-    v1.x;
 
 
     auto dist = glm::distance(v1, v2);
