@@ -2,9 +2,13 @@
 #include <raylib.h>
 #include <entt/entt.hpp>
 #include <cstdint>
+#include <tools/Runtime.h>
 
 namespace ndn::pong
 {
+
+std::unique_ptr<tools::Runtime> SwitchRuntimeContext(std::unique_ptr<tools::Runtime> runtime);
+tools::Runtime& Runtime();
 
 using WorldRegistry = entt::registry;
 using Entity = entt::entity;

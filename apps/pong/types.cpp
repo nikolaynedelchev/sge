@@ -3,6 +3,19 @@
 namespace ndn::pong
 {
 
+static std::unique_ptr<tools::Runtime> s_runtime = nullptr;
+std::unique_ptr<tools::Runtime> SwitchRuntimeContext(std::unique_ptr<tools::Runtime> runtime)
+{
+    auto tmp = std::move(s_runtime);
+    s_runtime = std::move(runtime);
+    return tmp;
+}
+
+tools::Runtime &Runtime()
+{
+    return *s_runtime;
+}
+
 WorldRegistry& World()
 {
     static WorldRegistry s_registry;

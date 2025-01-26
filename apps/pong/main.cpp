@@ -6,28 +6,103 @@
 #include <sge/sge.h>
 #include <glm/glm.hpp>
 #include <glm/geometric.hpp>
+#include "types.h"
+#include <rlImGui/rlImGui.h>
+#include <imgui/imgui.h>
 
 namespace ndn::pong
 {
 static sge::engine engine;
 
-void Init()
+bool Init()
 {
-    engine.init("./", 640, 400);
+    try {
+        auto runtime = std::make_unique<tools::Runtime>();
+        SwitchRuntimeContext(std::move(runtime));
+        engine.init("./", 1280, 1280);
+        rlImGuiSetup(true);
+
+        ImGuiIO& io = ImGui::GetIO();
+        io.FontGlobalScale = 2.0f;
+        ImGui::GetStyle().ScaleAllSizes(2.0f);
+    } catch (...) {
+        rlImGuiShutdown();
+        engine.close();
+        SwitchRuntimeContext(nullptr);
+        return false;
+    }
+    return true;
 }
 
 void GameLoop()
 {
 
+    bool rendImage = false;
+    RenderTexture2D target = LoadRenderTexture(800, 600); // Размер на framebuffer
+    while(!engine.should_close())
+    {
+        BeginTextureMode(target);
+        ClearBackground(RAYWHITE);
+        DrawRectangle(10, 10, 600, 400, RED);
+        DrawText("Hello from raylib!", 10, 10, 20, DARKGRAY);
+        EndTextureMode();
+
+
+        engine.begin_frame();
+        engine.clear_frame(sge::colors::white);
+
+        rlImGuiBegin();
+
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar     // Без заглавна лента
+                                        | ImGuiWindowFlags_NoResize       // Без възможност за преоразмеряване
+                                        | ImGuiWindowFlags_NoMove         // Неподвижен прозорец
+                                        | ImGuiWindowFlags_NoCollapse     // Без бутон за свиване
+                                        | ImGuiWindowFlags_NoScrollbar    // Без скролбар
+                                        | ImGuiWindowFlags_NoBringToFrontOnFocus; // Без фокус
+
+        ImGui::SetNextWindowPos(ImVec2(0, 0)); // Начална позиция (горен ляв ъгъл)
+        ImGui::SetNextWindowSize(ImVec2(GetScreenWidth(), GetScreenHeight())); // Размер на прозореца
+
+        ImGui::Begin("Test Wind", nullptr, window_flags);
+        if (ImGui::Button("Test button"))
+        {
+            rendImage = !rendImage;
+        }
+
+        if (rendImage)
+        {
+            Rectangle srcRect = {0, 0, float(target.texture.width), float(target.texture.height)};
+            rlImGuiImageRect(&target.texture, target.texture.width, target.texture.height, srcRect);
+        }
+        ImGui::Button("Test button 2");
+        ImGui::End();
+        rlImGuiEnd();
+
+        //DrawTexture(target.texture, 100, 100, RAYWHITE);
+
+        engine.end_frame();
+    }
+    UnloadRenderTexture(target);
+}
+
+int Shutdown()
+{
+    rlImGuiShutdown();
+    engine.close();
+    SwitchRuntimeContext(nullptr);
+    return 0;
 }
 
 }
 
 int main()
 {
-    ndn::pong::Init();
-    ndn::pong::GameLoop();
-    return 0;
+    if (ndn::pong::Init())
+    {
+        ndn::pong::GameLoop();
+        return ndn::pong::Shutdown();
+    }
+    return -1;
 
     glm::vec2 v1 = {0.5, 1.4};
     glm::vec2 v2 = {12.5, 1.6};

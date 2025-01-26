@@ -18,6 +18,8 @@ add_subdirectory(thirdparty/entt)
 include_directories(${CMAKE_SOURCE_DIR}/thirdparty/entt/src)
 
 add_subdirectory(thirdparty/raylib)
+add_subdirectory(thirdparty/imguibuilder)
+
 add_subdirectory(libs/tools)
 
 add_subdirectory(libs/sge)

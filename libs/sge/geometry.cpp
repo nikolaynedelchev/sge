@@ -18,4 +18,13 @@ void test_fun_geom()
 
     //rect.a
 }
+
+glm::mat2 RotationMatrix2(double radians)
+{
+    double s = glm::sin(radians);
+    double c = glm::cos(radians);
+    return glm::mat2(c, -s,
+                     s,  c);
+}
+
 }
