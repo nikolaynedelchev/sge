@@ -18,3 +18,13 @@ add_library(rlimgui STATIC ${RLIMGUI_SOURCE_FILES})
 target_link_libraries(rlimgui PUBLIC raylib imgui)
 target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../rlImGui)
 target_include_directories(rlimgui PUBLIC ./../)
+
+# lua
+file(GLOB_RECURSE RLUA_SOURCE_FILES ./../lua/*.cpp
+                                    ./../lua/*.c)
+
+add_library(lua STATIC ${RLUA_SOURCE_FILES})
+
+target_link_libraries(lua)
+target_include_directories(lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../lua)
+target_include_directories(lua PUBLIC ./../)
