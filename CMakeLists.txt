@@ -20,6 +20,9 @@ include_directories(${CMAKE_SOURCE_DIR}/thirdparty/entt/src)
 add_subdirectory(thirdparty/raylib)
 add_subdirectory(thirdparty/builders)
 
+#include_directories(${CMAKE_SOURCE_DIR}/thirdparty/zep/include)
+#add_subdirectory(thirdparty/zep)
+
 add_subdirectory(libs/tools)
 
 add_subdirectory(libs/sge)

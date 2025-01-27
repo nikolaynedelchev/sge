@@ -9,10 +9,114 @@
 #include "types.h"
 #include <rlImGui/rlImGui.h>
 #include <imgui/imgui.h>
+//#include <zep/include/zep.h>
+//#include <zep/imgui/editor_imgui.h>
+
+extern "C" {
+#include <lua/lua.h>
+
+#include <lua/lauxlib.h>
+#include <lua/lualib.h>
+}
+
+#include "TextEditor/TextEditor.h"
 
 namespace ndn::pong
 {
 static sge::engine engine;
+
+void PrintAllGlobals(lua_State *L)
+{
+    lua_pushglobaltable(L);
+
+        // Итерация през _G
+        lua_pushnil(L); // Първоначално nil за началото на таблицата
+        while (lua_next(L, -2) != 0) {
+            // Ключът е на индекс -2, стойността е на индекс -1
+            const char *key = lua_tostring(L, -2); // Ключът
+            if (lua_isstring(L, -1)) {
+                // Ако стойността е стринг
+                printf("%s = %s\n", key, lua_tostring(L, -1));
+            } else if (lua_isnumber(L, -1)) {
+                // Ако стойността е число
+                printf("%s = %g\n", key, lua_tonumber(L, -1));
+            } else if (lua_istable(L, -1)) {
+                // Ако стойността е таблица
+                printf("%s = (table)\n", key);
+            } else {
+                // Други типове
+                printf("%s = (unsupported type)\n", key);
+            }
+
+            // Премахваме стойността, за да продължим към следващия елемент
+            lua_pop(L, 1);
+        }
+
+        // Премахваме таблицата _G от стека
+        lua_pop(L, 1);
+}
+
+void TestLua()
+{
+    lua_State *L = luaL_newstate();
+    if (L == nullptr) {
+        fprintf(stderr, "Cannot create Lua state.\n");
+        return;
+    }
+
+    // Зареждане на стандартните библиотеки на Lua
+    luaL_openlibs(L);
+
+    // Зареждане на Lua скрипт
+    std::string luaScr = R"(
+        my_test_string = "ehooo"
+        function add(a, b)
+            return a + b
+        end
+        my_test_num = 3.14
+        my_test_table = {ehoo=2,type="test"}
+    )";
+    if (luaL_dostring(L, luaScr.c_str())) {
+        fprintf(stderr, "Error loading Lua script: %s\n", lua_tostring(L, -1));
+        lua_close(L);
+        return;
+    }
+
+    // Подготвяне за извикване на Lua функцията
+    lua_getglobal(L, "add"); // Зарежда Lua функцията "add"
+    if (!lua_isfunction(L, -1)) {
+        fprintf(stderr, "'add' is not a valid function.\n");
+        lua_close(L);
+        return;
+    }
+
+    // Подаване на аргументи към функцията
+    lua_pushnumber(L, 10); // Първи аргумент
+    lua_pushnumber(L, 20); // Втори аргумент
+
+    // Извикване на функцията (2 аргумента, 1 резултат)
+    if (lua_pcall(L, 2, 1, 0) != LUA_OK) {
+        fprintf(stderr, "Error calling function: %s\n", lua_tostring(L, -1));
+        lua_close(L);
+        return;
+    }
+
+    // Извличане на резултата
+    if (lua_isnumber(L, -1)) {
+        double result = lua_tonumber(L, -1);
+        printf("Result: %f\n", result);
+    } else {
+        fprintf(stderr, "Unexpected return type.\n");
+    }
+
+    // Почистване на Lua стека
+    lua_pop(L, 1);
+
+    PrintAllGlobals(L);
+
+    // Затваряне на Lua средата
+    lua_close(L);
+}
 
 bool Init()
 {
@@ -36,7 +140,10 @@ bool Init()
 
 void GameLoop()
 {
-
+    //Zep::ZepEditor_ImGui zepEdit(".", {1, 1});
+    TextEditor te;
+    te.SetColorizerEnable(true);
+    te.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
     bool rendImage = false;
     RenderTexture2D target = LoadRenderTexture(800, 600); // Размер на framebuffer
     while(!engine.should_close())
@@ -74,6 +181,10 @@ void GameLoop()
             Rectangle srcRect = {0, 0, float(target.texture.width), float(target.texture.height)};
             rlImGuiImageRect(&target.texture, target.texture.width, target.texture.height, srcRect);
         }
+
+        te.Render("Editor title", {800, 500}, true);
+        //zepEdit.Display();
+
         ImGui::Button("Test button 2");
         ImGui::End();
         rlImGuiEnd();
@@ -97,6 +208,9 @@ int Shutdown()
 
 int main()
 {
+    ndn::pong::TestLua();
+    //return 0;
+
     if (ndn::pong::Init())
     {
         ndn::pong::GameLoop();

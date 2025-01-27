@@ -20,10 +20,10 @@ target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../rlImGui)
 target_include_directories(rlimgui PUBLIC ./../)
 
 # lua
-file(GLOB_RECURSE RLUA_SOURCE_FILES ./../lua/*.cpp
-                                    ./../lua/*.c)
+file(GLOB_RECURSE LUA_SOURCE_FILES ./../lua/l*.cpp
+                                   ./../lua/l*.c)
 
-add_library(lua STATIC ${RLUA_SOURCE_FILES})
+add_library(lua STATIC ${LUA_SOURCE_FILES})
 
 target_link_libraries(lua)
 target_include_directories(lua PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../lua)

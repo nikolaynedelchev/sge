@@ -19,3 +19,6 @@
 [submodule "thirdparty/lua"]
 	path = thirdparty/lua
 	url = https://github.com/lua/lua.git
+[submodule "thirdparty/zep"]
+	path = thirdparty/zep
+	url = https://github.com/Rezonality/zep.git
