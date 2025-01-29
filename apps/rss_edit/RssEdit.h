@@ -1,0 +1,25 @@
+#pragma once
+#include "TextEditor/TextEditor.h"
+#include <raylib.h>
+#include <map>
+namespace ndn::rssedit
+{
+
+class RssEdit
+{
+public:
+    int Run();
+private:
+    void DrawTextEditor();
+    void DrawRssBrowser();
+    void DrawRssRend();
+    void Draw();
+    void Loop();
+    void LoadImage(const std::string& fileName);
+
+    float m_rssSplitterY = 400.0f;
+    TextEditor m_textEditor;
+    std::map<std::string, RenderTexture2D> m_rssTextures;
+};
+
+}

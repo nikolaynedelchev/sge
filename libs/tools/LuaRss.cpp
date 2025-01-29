@@ -12,6 +12,71 @@ extern "C" {
 namespace ndn::tools::rss_loader
 {
 
+static std::string s_luaHelpers = R"(
+
+SpriteSheet = ""
+
+function Sprite(input)
+    local sprite = {}
+    sprite.resource_type = "sprite"
+    sprite.x = input.x or 0
+    sprite.y = input.y or 0
+    sprite.w = input.w or 0
+    sprite.h = input.h or 0
+    sprite.scale = input.scale or 0.0
+    sprite.rotation = input.rotation or 0.0
+    sprite.file = input.fileName or SpriteSheet
+
+    local pivot_offsets = {
+            center = { 0.5, 0.5 },
+            up = { 0.5, 0.0 },
+            up_left = { 0.0, 0.0 },
+            up_right = { 1.0, 0.0 },
+            down = { 0.5, 1.0 },
+            down_left = { 0.0, 1.0 },
+            down_right = { 1.0, 1.0 },
+            left = { 0.0, 0.5 },
+            right = { 1.0, 0.5 }
+        }
+
+    if input.pivot and pivot_offsets[input.pivot] then
+        local offset = pivot_offsets[input.pivot]
+        sprite.pivotX = math.floor(sprite.w * offset[1])
+        sprite.pivotY = math.floor(sprite.h * offset[2])
+    else
+        sprite.pivotX = input.pivotX or 0
+        sprite.pivotY = input.pivotY or 0
+    end
+
+    return sprite
+end
+
+function Animation(input)
+    local animation = {}
+    animation.resource_type = "animation"
+    animation.pivotX = input.pivotX or 0
+    animation.pivotY = input.pivotY or 0
+    animation.scale = input.scale or 0.0
+    animation.rotation = input.rotation or 0.0
+    animation.fps = input.fps or 0.0
+
+    animation.frames = {}
+    if input.frames then
+        for i, sprite in ipairs(input.frames) do
+            animation.frames[i] = Sprite(sprite)
+        end
+    end
+
+    function animation:Frame(sprite)
+        table.insert(self.frames, Sprite(sprite))
+        return self
+    end
+
+    return animation
+end
+
+)";
+
 template<typename T>
 using Opt = std::optional<T>;
 
@@ -218,6 +283,12 @@ lua_State * ExecuteLuaScript(const std::string& script)
 
     // Load Lua standard libs
     luaL_openlibs(luaState);
+    if (luaL_dostring(luaState, s_luaHelpers.c_str()))
+    {
+        fmt::println(stderr, "Error loading Lua helpers: {}", lua_tostring(luaState, -1));
+        lua_close(luaState);
+        return nullptr;
+    }
     if (luaL_dostring(luaState, script.c_str()))
     {
         fmt::println(stderr, "Error loading Lua script: {}", lua_tostring(luaState, -1));
