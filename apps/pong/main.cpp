@@ -68,6 +68,7 @@ void GameLoop()
         BeginTextureMode(target);
         ClearBackground(RAYWHITE);
         DrawRectangle(10, 10, 600, 400, RED);
+        DrawTriangle(Vector2{50.0f, 20.0f}, Vector2{15.0f, 300.0f}, Vector2{340.0f, 80.0f}, BLUE);
         DrawText("Hello from raylib!", 10, 10, 20, DARKGRAY);
         EndTextureMode();
 
@@ -99,8 +100,8 @@ void GameLoop()
 
             if (rendImage)
             {
-                Rectangle srcRect = {0, 0, float(target.texture.width), float(target.texture.height)};
-                rlImGuiImageRect(&target.texture, target.texture.width, target.texture.height, srcRect);
+                Rectangle srcRect = {0, 0, float(target.texture.width), -float(target.texture.height)};
+                rlImGuiImageRect(&target.texture, target.texture.width * 0.5f, target.texture.height * 0.5f, srcRect);
             }
 
             ImGui::TableNextColumn();

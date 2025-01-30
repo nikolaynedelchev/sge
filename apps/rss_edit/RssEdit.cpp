@@ -68,14 +68,17 @@ SpriteSheet = "full/filename"
 
 int RssEdit::Run()
 {
-    try {
+    try
+    {
         engine.init("./", 1280, 1280);
         rlImGuiSetup(true);
 
         ImGuiIO& io = ImGui::GetIO();
-        io.FontGlobalScale = 3.0f;
-        ImGui::GetStyle().ScaleAllSizes(3.0f);
-    } catch (...) {
+        io.FontGlobalScale = 1.5f;
+        ImGui::GetStyle().ScaleAllSizes(1.5f);
+    }
+    catch (...)
+    {
         rlImGuiShutdown();
         engine.close();
         return false;
