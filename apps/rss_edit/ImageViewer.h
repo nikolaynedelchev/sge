@@ -12,7 +12,7 @@ class ImageViewer
 public:
     void SetImage(const std::string& imageFile);
     void EnableZoom(bool isEnabled);
-    void SetDecorator(std::function<void(Vector2 currentSize, Vector2 srcTopLeft, Vector2 srcDnRight)> decorator);
+    void SetDecorator(std::function<void(Vector2 zoom, Vector2 offset)> decorator);
     void SetScale(float scale);
     void FitToViewArea();
 
@@ -27,7 +27,7 @@ private:
     Vector2 m_viewAreaSize = {256.0f, 256.0f};
     Texture2D m_originalTexture;
     RenderTexture2D m_decoratedTexture;
-    std::function<void(Vector2 currentSize, Vector2 srcTopLeft, Vector2 srcDnRight)> m_decorator;
+    std::function<void(Vector2 zoom, Vector2 offset)> m_decorator;
 
 };
 

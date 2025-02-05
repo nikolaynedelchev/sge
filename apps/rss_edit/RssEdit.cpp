@@ -19,6 +19,7 @@ extern "C" {
 #include "TextEditor/TextEditor.h"
 #include "RssEdit.h"
 #include "GuiTools.h"
+#include <raymath.h>
 
 namespace ndn::rssedit
 {
@@ -87,6 +88,18 @@ int RssEdit::Run()
     m_textEditor.SetColorizerEnable(true);
     m_textEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
 
+    m_imgViewer.SetImage("/home/nikolay/tmp/test_png_transp.png");
+    m_imgViewer.SetDecorator([](Vector2 zoom, Vector2 offset){
+
+        Vector2 p1 = {10.0f, 15.0f}, p2 = Vector2{25.0f, 90.0f}, p3 = Vector2{85.0f, 40.0f};
+
+        p1 = p1 * zoom + offset;
+        p2 = p2 * zoom + offset;
+        p3 = p3 * zoom + offset;
+
+        DrawTriangle(p1, p2, p3, BLUE);
+        DrawText("Hello from raylib!", 10 * zoom.x + offset.x, 10 * zoom.y + offset.y, 20 * zoom.x, DARKGRAY);
+    });
     Loop();
 
     rlImGuiShutdown();
@@ -98,7 +111,7 @@ void RssEdit::DrawTextEditor()
 {
     if (ImGui::Button("Test button 2"))
     {
-        auto resources = tools::rss_loader::LoadFromLuaGenerator(m_textEditor.GetText());
+        tools::rss_loader::Resources resources = tools::rss_loader::LoadFromLuaGenerator(m_textEditor.GetText());
         fmt::println("Resources:\n{}", resources);
     }
     m_textEditor.Render("Editor title", {}, true);
@@ -113,9 +126,7 @@ void RssEdit::DrawRssBrowser()
 
 void RssEdit::DrawRssRend()
 {
-    if (ImGui::Button("Rss renderer"))
-    {
-    }
+    m_imgViewer.Draw();
 }
 
 void RssEdit::Draw()
