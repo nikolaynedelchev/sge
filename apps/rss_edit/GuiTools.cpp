@@ -86,4 +86,20 @@ Texture ImageAsTexture(const std::string &file)
     return texture;
 }
 
+void DrawBorders(Rectangle rect, float thick, Color color)
+{
+    auto szX = Vec(rect.width, 0);
+    auto szY = Vec(0, rect.height);
+
+    auto uplf = Vec(rect.x, rect.y);
+    auto uprg = uplf + szX;
+    auto dnrg = uprg + szY;
+    auto dnlf = uplf + szY;
+
+    DrawLineEx(uplf, uprg, thick, color);
+    DrawLineEx(uprg, dnrg, thick, color);
+    DrawLineEx(dnlf, dnrg, thick, color);
+    DrawLineEx(uplf, dnlf, thick, color);
+}
+
 }

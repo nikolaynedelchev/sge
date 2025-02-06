@@ -25,6 +25,8 @@ namespace ndn::rssedit
 {
 static sge::engine engine;
 
+static tools::rss_loader::Resources s_resources;
+static std::string s_editorSelectedText;
 
 void RssEdit::Loop()
 {
@@ -91,6 +93,25 @@ int RssEdit::Run()
     m_imgViewer.SetImage("/home/nikolay/tmp/test_png_transp.png");
     m_imgViewer.SetDecorator([](Vector2 zoom, Vector2 offset){
 
+        for (const auto& p : s_resources.sprites)
+        {
+            const auto& key = p.first;
+            const auto& sprite = p.second;
+            auto pos = Vec(sprite.x, sprite.y) * zoom + offset;
+            auto sz = Vec(sprite.w, sprite.h) * zoom;
+
+            Rectangle r = Rect(pos, sz);
+
+            if (key == s_editorSelectedText)
+            {
+                GuiTools::DrawBorders(r, 6, BLUE);
+            }
+            else
+            {
+                GuiTools::DrawBorders(r, 2, WHITE);
+            }
+        }
+
         Vector2 p1 = {10.0f, 15.0f}, p2 = Vector2{25.0f, 90.0f}, p3 = Vector2{85.0f, 40.0f};
 
         p1 = p1 * zoom + offset;
@@ -109,10 +130,20 @@ int RssEdit::Run()
 
 void RssEdit::DrawTextEditor()
 {
+    ImGuiIO& io = ImGui::GetIO();
+
+    // Проверка за Ctrl + S
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S))
+    {
+        s_resources = tools::rss_loader::LoadFromLuaGenerator(m_textEditor.GetText());
+        fmt::println("Resources:\n{}", s_resources);
+    }
+    s_editorSelectedText = m_textEditor.GetSelectedText();
+
     if (ImGui::Button("Test button 2"))
     {
-        tools::rss_loader::Resources resources = tools::rss_loader::LoadFromLuaGenerator(m_textEditor.GetText());
-        fmt::println("Resources:\n{}", resources);
+        s_resources = tools::rss_loader::LoadFromLuaGenerator(m_textEditor.GetText());
+        fmt::println("Resources:\n{}", s_resources);
     }
     m_textEditor.Render("Editor title", {}, true);
 }
