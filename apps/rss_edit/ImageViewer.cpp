@@ -76,35 +76,22 @@ void ImageViewer::Draw()
     ImGuiIO& io = ImGui::GetIO();
     if (io.KeyCtrl && io.MouseWheel != 0.0f)
     {
-        Vector2 elementPos = {ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y};
-        Vector2 mousePos = {io.MousePos.x, io.MousePos.y};
+        Vector2 elementPos = Vec(ImGui::GetCursorScreenPos());
+        Vector2 mousePos = Vec(io.MousePos);
         m_zoomAnchorRelativeToWindow = mousePos - elementPos;
         Vector2 relativeImagePointScaled = m_zoomAnchorRelativeToWindow - m_offset;
         m_zoomAnchorRelativeToImage = relativeImagePointScaled / m_scale;
-
-        //m_scaleTarget = m_scale;
 
         m_scaleTarget.x += m_scaleTarget.x * (io.MouseWheel / 10.0f);
         m_scaleTarget.y += m_scaleTarget.y * (io.MouseWheel / 10.0f);
         if (m_scaleTarget.x < 0.01f) m_scaleTarget.x = 0.01f;
         if (m_scaleTarget.y < 0.01f) m_scaleTarget.y = 0.01f;
         m_scaleStep = (m_scaleTarget - m_scale) / 6.f;
-
-
-        // Vector2 newRelativeImagePointScaled = m_zoomAnchorRelativeToImage * m_scaleTarget;
-        // m_offset = m_zoomAnchorRelativeToWindow - newRelativeImagePointScaled;
-
-
-        // m_scale = m_scaleTarget;
-        //ImGui::Text("Scroll detected with Ctrl!");
-        //ImGui::Text("Relative Mouse Position: (%.2f, %.2f)", relative_mouse_pos.x, relative_mouse_pos.y);
     }
 
     if (io.MouseDown[ImGuiMouseButton_Middle])
     {
-        ImVec2 mouseDelta = io.MouseDelta;
-        m_offset.x += mouseDelta.x;
-        m_offset.y += mouseDelta.y;
+        m_offset += Vec(io.MouseDelta);
     }
 
     UpdateScale();
@@ -115,8 +102,7 @@ void ImageViewer::Draw()
     Rectangle source = { 0.0f, 0.0f,
                          (float)m_originalTexture.width, (float)m_originalTexture.height };
 
-    Rectangle dest = { m_offset.x, m_offset.y,
-                       (float)m_originalTexture.width*m_scale.x, (float)m_originalTexture.height*m_scale.y };
+    Rectangle dest = Rect(m_offset, Vec(m_originalTexture.width, m_originalTexture.height) * m_scale);
 
     DrawTexturePro(m_originalTexture, source, dest, {0.0f, 0.0f}, 0.0f, WHITE);
 

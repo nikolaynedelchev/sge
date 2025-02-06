@@ -104,7 +104,12 @@ int RssEdit::Run()
 
             if (key == s_editorSelectedText)
             {
-                GuiTools::DrawBorders(r, 6, BLUE);
+                auto thick = 6.0f;
+                if (zoom.x > 15.0f)
+                {
+                    thick = 12.0f;
+                }
+                GuiTools::DrawBorders(r, thick, BLUE);
             }
             else
             {
@@ -139,12 +144,6 @@ void RssEdit::DrawTextEditor()
         fmt::println("Resources:\n{}", s_resources);
     }
     s_editorSelectedText = m_textEditor.GetSelectedText();
-
-    if (ImGui::Button("Test button 2"))
-    {
-        s_resources = tools::rss_loader::LoadFromLuaGenerator(m_textEditor.GetText());
-        fmt::println("Resources:\n{}", s_resources);
-    }
     m_textEditor.Render("Editor title", {}, true);
 }
 

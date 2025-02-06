@@ -42,6 +42,11 @@ namespace ndn::rssedit
         return Vector2{float(x), float(y)};
     }
 
+    static inline Vector2 Vec(const ImVec2& v)
+    {
+        return Vector2{float(v.x), float(v.y)};
+    }
+
     template<typename T1, typename T2, typename T3, typename T4>
     static inline Rectangle Rect(T1 x, T2 y, T3 w, T4 h)
     {
