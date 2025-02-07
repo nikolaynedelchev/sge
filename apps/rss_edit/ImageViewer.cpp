@@ -5,14 +5,24 @@
 namespace ndn::rssedit
 {
 
+void ImageViewer::SetImageMgr(std::shared_ptr<sge::ImageMgr> imgMgr)
+{
+    m_imgMgr = imgMgr;
+}
+
 void ImageViewer::SetImage(const std::string &imageFile)
 {
-    m_originalTexture = GuiTools::ImageAsTexture(imageFile);
+    m_originalTexture = m_imgMgr->Texture(imageFile);
     m_decoratedTexture = LoadRenderTexture(int(m_viewAreaSize.x), int(m_viewAreaSize.y));
     FitToViewArea();
     m_scale = {1.0f, 1.0f};
     m_scaleStep = {0.0f, 0.0f};
     m_scaleTarget = m_scale;
+}
+
+void ImageViewer::SetBackground(const std::string &imageFile)
+{
+    m_backgroundTexture = m_imgMgr->Texture(imageFile);
 }
 
 void ImageViewer::EnableZoom(bool isEnabled)
@@ -65,11 +75,10 @@ void ImageViewer::ResizeViewArea(Vector2 newSize)
 
 void ImageViewer::Draw()
 {
-
-    ImVec2 max = ImGui::GetContentRegionAvail(); //ImGui::GetWindowContentRegionMax();
-    if (std::abs(max.x - m_viewAreaSize.x) > 50 || std::abs(max.y - m_viewAreaSize.y) > 50)
+    Rectangle max = Rect(ImGui::GetContentRegionAvail()); //ImGui::GetWindowContentRegionMax();
+    if (std::abs(max.width - m_viewAreaSize.x) > 50 || std::abs(max.height - m_viewAreaSize.y) > 50)
     {
-        ResizeViewArea({max.x, max.y});
+        ResizeViewArea({max.width, max.height});
         FitToViewArea();
     }
 
@@ -104,6 +113,7 @@ void ImageViewer::Draw()
 
     Rectangle dest = Rect(m_offset, Vec(m_originalTexture.width, m_originalTexture.height) * m_scale);
 
+    DrawTexturePro(m_backgroundTexture, max, max, {0.0f, 0.0f}, 0.0f, WHITE);
     DrawTexturePro(m_originalTexture, source, dest, {0.0f, 0.0f}, 0.0f, WHITE);
 
     if (m_decorator)

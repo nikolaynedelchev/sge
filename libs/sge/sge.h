@@ -3,3 +3,4 @@
 #include "engine_bridge.h"
 #include "formatters.hpp"
 #include "operators.h"
+#include "image_mgr.h"

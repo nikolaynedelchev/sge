@@ -2,6 +2,7 @@
 #include <fmt/printf.h>
 #include <optional>
 #include <functional>
+
 extern "C" {
 #include <lua/lua.h>
 
@@ -51,6 +52,24 @@ function Sprite(input)
     return sprite
 end
 
+function SpriteArray(input)
+    local spriteArray = {}
+    spriteArray.resource_type = "sprite_array"
+
+    spriteArray.sprites = {}
+    if input.sprites then
+        for i, sprite in ipairs(input.sprites) do
+            spriteArray.sprites[i] = Sprite(sprite)
+        end
+    end
+
+    function spriteArray:Add(sprite)
+        table.insert(self.sprites, Sprite(sprite))
+        return self
+    end
+    return spriteArray
+end
+
 function Animation(input)
     local animation = {}
     animation.resource_type = "animation"
@@ -59,18 +78,7 @@ function Animation(input)
     animation.scale = input.scale or 0.0
     animation.rotation = input.rotation or 0.0
     animation.fps = input.fps or 0.0
-
-    animation.frames = {}
-    if input.frames then
-        for i, sprite in ipairs(input.frames) do
-            animation.frames[i] = Sprite(sprite)
-        end
-    end
-
-    function animation:Frame(sprite)
-        table.insert(self.frames, Sprite(sprite))
-        return self
-    end
+    animation.spriteArray = input.spriteArray or ""
 
     return animation
 end
@@ -157,6 +165,27 @@ Opt<Sprite> ReadSprite(ParserCtx& ctx, lua_State* luaState)
     }
 }
 
+Opt<SpriteArray> ReadSpriteArray(ParserCtx& ctx, lua_State* luaState)
+{
+    try
+    {
+        SpriteArray array;
+        IterateTableArray(luaState, "sprites",
+        [&array, &ctx, luaState](int idx){
+            auto s = ReadSprite(ctx, luaState);
+            if (s.has_value())
+            {
+                array.push_back(s.value());
+            }
+        });
+        return array;
+    }
+    catch (...)
+    {
+        return {};
+    }
+}
+
 Opt<Animation> ReadAnimation(ParserCtx& ctx, lua_State* luaState)
 {
     try
@@ -167,14 +196,7 @@ Opt<Animation> ReadAnimation(ParserCtx& ctx, lua_State* luaState)
         a.scale = *ReadTableNum<float>(luaState,        "scale");
         a.rotationDeg = *ReadTableNum<float>(luaState,  "rotation");
         a.fps = *ReadTableNum<float>(luaState,          "fps");
-        IterateTableArray(luaState, "frames",
-        [&a, &ctx, luaState](int idx){
-            auto s = ReadSprite(ctx, luaState);
-            if (s.has_value())
-            {
-                a.frames.push_back(s.value());
-            }
-        });
+        a.spriteArray = *ReadTableString(luaState,      "spriteArray");
         return a;
     }
     catch (...)
@@ -210,6 +232,14 @@ void HandleTable(ParserCtx& ctx, const std::string& tableName, lua_State* luaSta
             if (spriteOpt.has_value())
             {
                 ctx.allResources.sprites[tableName] = spriteOpt.value();
+            }
+        }
+        else if(rssType == "sprite_array")
+        {
+            auto spriteArrayOpt = ReadSpriteArray(ctx, luaState);
+            if (spriteArrayOpt.has_value())
+            {
+                ctx.allResources.spriteArrays[tableName] = spriteArrayOpt.value();
             }
         }
         else if(rssType == "animation")
@@ -336,15 +366,21 @@ std::string format_as(const Sprite &s)
                         s.x,s.y,s.w,s.h,s.pivotX,s.pivotY,s.scale,s.rotationDeg,s.fileName);
 }
 
+std::string format_as(const SpriteArray &sprites)
+{
+    auto str = fmt::format("[\n");
+    for(size_t i = 0; i < sprites.size(); i++)
+    {
+        str += fmt::format("Frame {}:\n{}\n", i, sprites[i]);
+    }
+    return str += "]";
+}
+
 std::string format_as(const Animation &a)
 {
-    auto str = fmt::format("pivotX: {}\npivotY: {}\nscale: {}\nrotationDeg: {}\nfps: {}\nFrames:[\n",
-                            a.pivotX,a.pivotY,a.scale,a.rotationDeg,a.fps);
-    for(size_t i = 0; i < a.frames.size(); i++)
-    {
-        str += fmt::format("Frame {}:\n{}\n", i, a.frames[i]);
-    }
-    return str += "]\n";
+    auto str = fmt::format("pivotX: {}\npivotY: {}\nscale: {}\nrotationDeg: {}\nfps: {}\nFrames:{}\n",
+                            a.pivotX, a.pivotY, a.scale, a.rotationDeg, a.fps, a.spriteArray);
+    return str;
 }
 
 std::string format_as(const Sound &s)
@@ -360,6 +396,11 @@ std::string format_as(const Resources &r)
     {
         str += fmt::format("key: {}, sprite:\n{}\n", p.first, p.second);
     }
+    str += "\nSpriteArrays:\n";
+    for(const auto& p : r.spriteArrays)
+    {
+        str += fmt::format("key: {}, sprites:\n[{}]\n", p.first, p.second);
+    }
     str += "\nAnimations:\n";
     for(const auto& p : r.animations)
     {
@@ -371,6 +412,72 @@ std::string format_as(const Resources &r)
         str += fmt::format("key: {}, sound: {}\n", p.first, p.second);
     }
     return str + "\n";
+}
+
+SpriteArray AutoSprites(const std::vector<std::vector<uint32_t>>& imagePixels)
+{
+    static constexpr uint8_t READY = 0x01;
+    static constexpr uint8_t NOT_READY = 0xFF;
+    static constexpr uint8_t EMPTY = 0x0;
+    std::vector<std::vector<uint8_t>> image(imagePixels.size());
+    for(size_t y = 0; y < imagePixels.size(); y++)
+    {
+        image[y].resize(imagePixels[y].size());
+        for(size_t x = 0; x < image[y].size(); x++)
+        {
+            image[y][x] = (imagePixels[y][x] == 0)? EMPTY : NOT_READY;
+        }
+    }
+
+    std::vector<std::pair<int, int>> q;
+    std::vector<std::pair<int, int>> directions = {
+        {-1,0},{+1,0},{0,-1},{0,+1},{-1,-1},{+1,+1},{+1,-1},{-1,+1}
+    };
+
+    SpriteArray result;
+    for(size_t y = 0; y < image.size(); y++)
+    {
+        for(size_t x = 0; x < image[y].size(); x++)
+        {
+            if (image[y][x] == NOT_READY)
+            {
+                int minX = x, maxX = x, minY = y, maxY = y;
+                image[y][x] = READY;
+                q.push_back({x, y});
+                while(!q.empty())
+                {
+                    int px = q.back().first;
+                    int py = q.back().second;
+                    q.pop_back();
+                    for(const auto& d : directions)
+                    {
+                        int nextX = px + d.first;
+                        int nextY = py + d.second;
+                        if (nextY > 0 && nextY < image.size() &&
+                            nextX > 0 && nextX < image[nextY].size() &&
+                            image[nextY][nextX] == NOT_READY)
+                        {
+                            q.push_back({nextX, nextY});
+                            image[nextY][nextX] = READY;
+                            if (nextX > maxX) maxX = nextX;
+                            if (nextX < minX) minX = nextX;
+                            if (nextY > maxY) maxY = nextY;
+                            if (nextY < minY) minY = nextY;
+                        }
+                    }
+                }
+
+                result.push_back({});
+                auto& s = result.back();
+                s.x = minX;
+                s.y = minY;
+                s.w = maxX - minX + 1;
+                s.h = maxY - minY + 1;
+                s.scale = 1.0;
+            }
+        }
+    }
+    return result;
 }
 
 }

@@ -20,6 +20,7 @@ extern "C" {
 #include "RssEdit.h"
 #include "GuiTools.h"
 #include <raymath.h>
+#include <sge/image_mgr.h>
 
 namespace ndn::rssedit
 {
@@ -27,15 +28,26 @@ static sge::engine engine;
 
 static tools::rss_loader::Resources s_resources;
 static std::string s_editorSelectedText;
+static std::shared_ptr<sge::ImageMgr> s_imgMgr;
+
+
+//static std::string s_testImg = "/home/nikolay/tmp/test_png_transp.png";
+static std::string s_testImg = "/home/nikolay/Downloads/2dShooterAssets/Foozle_2DS0012_Void_EnemyFleet_1/Kla'ed/Weapons/PNGs/Kla'ed - Frigate - Weapons.png";
+static std::string s_emptyBackground = "/home/nikolay/tmp/empty_background.png";
+static tools::rss_loader::SpriteArray s_autoExtracted;
 
 void RssEdit::Loop()
 {
     std::string luaScr = R"(
 -- rss_key1 = Sprite({x=0,y=0,w=32,h=24,pivot="center",scale=1.0,rotation=0.0})
 -- rss_key2 = Sprite({x=0,y=0,w=32,h=24,pivotX=16,pivotY=8,scale=1.0,rotation=0.0})
+--      pivot: center, up, up_left, up_right, down, down_left, down_right, left, right
 --
--- rss_key3 = Animation({fps=8.0,pivotX=16,pivotY=8,scale=1.0,rotation=0.0})
--- rss_key3:Frame({x=0,y=0,w=32,h=24,pivot="center",scale=1.0,rotation=0.0})
+-- rss_key3 = SpriteArray({})
+-- rss_key3:Add({x=0,y=0,w=32,h=24,pivot="center",scale=1.0,rotation=0.0})
+-- rss_key3:Add({x=0,y=0,w=32,h=24,pivotX=16,pivotY=8,scale=1.0,rotation=0.0})
+--
+-- rss_key4 = Animation({spriteArray="rss_key3", fps=8.0,pivotX=16,pivotY=8,scale=1.0,rotation=0.0})
 
 SpriteSheet = "full/filename"
 
@@ -87,16 +99,18 @@ int RssEdit::Run()
         return false;
     }
 
+    s_imgMgr = std::make_shared<sge::ImageMgr>();
+
     m_textEditor.SetColorizerEnable(true);
     m_textEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
 
-    m_imgViewer.SetImage("/home/nikolay/tmp/test_png_transp.png");
+    m_imgViewer.SetImageMgr(s_imgMgr);
+    m_imgViewer.SetBackground(s_emptyBackground);
+    m_imgViewer.SetImage(s_testImg);
     m_imgViewer.SetDecorator([](Vector2 zoom, Vector2 offset){
 
-        for (const auto& p : s_resources.sprites)
+        auto drawer = [zoom, offset](const tools::rss_loader::Sprite& sprite, const std::string& key)
         {
-            const auto& key = p.first;
-            const auto& sprite = p.second;
             auto pos = Vec(sprite.x, sprite.y) * zoom + offset;
             auto sz = Vec(sprite.w, sprite.h) * zoom;
 
@@ -115,16 +129,18 @@ int RssEdit::Run()
             {
                 GuiTools::DrawBorders(r, 2, WHITE);
             }
+        };
+        for (const auto& p : s_resources.sprites)
+        {
+            const auto& key = p.first;
+            const auto& sprite = p.second;
+            drawer(sprite, key);
         }
 
-        Vector2 p1 = {10.0f, 15.0f}, p2 = Vector2{25.0f, 90.0f}, p3 = Vector2{85.0f, 40.0f};
-
-        p1 = p1 * zoom + offset;
-        p2 = p2 * zoom + offset;
-        p3 = p3 * zoom + offset;
-
-        DrawTriangle(p1, p2, p3, BLUE);
-        DrawText("Hello from raylib!", 10 * zoom.x + offset.x, 10 * zoom.y + offset.y, 20 * zoom.x, DARKGRAY);
+        for (const auto& sprite : s_autoExtracted)
+        {
+            drawer(sprite, "auto");
+        }
     });
     Loop();
 
@@ -149,8 +165,49 @@ void RssEdit::DrawTextEditor()
 
 void RssEdit::DrawRssBrowser()
 {
-    if (ImGui::Button("Rss browser"))
+    if (ImGui::Button("AutoExtract"))
     {
+        auto pixels = s_imgMgr->Pixels(s_testImg);
+        s_autoExtracted = tools::rss_loader::AutoSprites(pixels);
+    }
+    if(ImGui::Button("Generate Trnasparency"))
+    {
+
+        int width = 64;
+        int height = 64;
+        int blockSz = 32;
+        Image image = GenImageColor(width, height, BLACK);
+
+        ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+        Color *pixels = (Color *)image.data;
+        for (int y = 0; y < height; y++)
+        {
+            bool yOdd = (y / blockSz) % 2;
+            bool y2Odd = (y % blockSz) % 2;
+            for (int x = 0; x < width; x++)
+            {
+                bool xOdd = (x / blockSz) % 2;
+                bool x2Odd = (x % blockSz) % 2;
+
+                int index = y * width + x;
+                Color c;
+                c.a = 150;
+                if (xOdd == yOdd)
+                {
+                    c.r = (x2Odd == y2Odd) ? 50 : 60;
+                    c.g = (x2Odd == y2Odd) ? 30 : 40;
+                    c.b = (x2Odd == y2Odd) ? 10 : 20;
+                }
+                else
+                {
+                    c.r = (x2Odd == y2Odd) ? 10 : 20;
+                    c.g = (x2Odd == y2Odd) ? 30 : 40;
+                    c.b = (x2Odd == y2Odd) ? 50 : 60;
+                }
+                pixels[index] = c;
+            }
+        }
+        ExportImage(image, s_emptyBackground.c_str());
     }
 }
 

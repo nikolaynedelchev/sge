@@ -3,6 +3,8 @@
 #include <raylib.h>
 #include <string>
 #include <functional>
+#include <sge/image_mgr.h>
+#include <memory>
 
 namespace ndn::rssedit
 {
@@ -10,7 +12,9 @@ namespace ndn::rssedit
 class ImageViewer
 {
 public:
+    void SetImageMgr(std::shared_ptr<sge::ImageMgr>);
     void SetImage(const std::string& imageFile);
+    void SetBackground(const std::string& imageFile);
     void EnableZoom(bool isEnabled);
     void SetDecorator(std::function<void(Vector2 zoom, Vector2 offset)> decorator);
     void FitToViewArea();
@@ -33,6 +37,8 @@ private:
     Vector2 m_scaleTarget;
     Vector2 m_zoomAnchorRelativeToImage;
     Vector2 m_zoomAnchorRelativeToWindow;
+    std::shared_ptr<sge::ImageMgr> m_imgMgr;
+    Texture2D m_backgroundTexture;
 };
 
 }

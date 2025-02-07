@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <fmt/core.h>
+#include <functional>
 
 namespace ndn::tools::rss_loader
 {
@@ -21,6 +22,9 @@ struct Sprite
 };
 std::string format_as(const Sprite& s);
 
+using SpriteArray = std::vector<Sprite>;
+std::string format_as(const SpriteArray& a);
+
 struct Animation
 {
     int pivotX = 0;
@@ -28,7 +32,7 @@ struct Animation
     float scale = 0.0f;
     float rotationDeg = 0.0f;
     float fps = 0.0f;
-    std::vector<Sprite> frames;
+    std::string spriteArray;
 };
 std::string format_as(const Animation& a);
 
@@ -42,6 +46,7 @@ std::string format_as(const Sound& s);
 struct Resources
 {
     std::map<std::string, Sprite> sprites;
+    std::map<std::string, SpriteArray> spriteArrays;
     std::map<std::string, Animation> animations;
     std::map<std::string, Sound> sounds;
 
@@ -50,6 +55,8 @@ struct Resources
 std::string format_as(const Resources& r);
 
 Resources LoadFromLuaGenerator(const std::string& luaGeneratorScript);
+SpriteArray AutoSprites(const std::vector<std::vector<uint32_t>>& imagePixels);
+
 }
 
 
