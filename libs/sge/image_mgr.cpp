@@ -8,6 +8,24 @@ const Image &ImageMgr::Load(const std::string &file)
     return LoadMutable(file);
 }
 
+Image &ImageMgr::Create(int width, int height, const std::string& key)
+{
+    auto it = m_images.find(key);
+    if (it != m_images.end())
+    {
+        auto& img = it->second;
+        if (img.width == width && img.height == height)
+        {
+            return img;
+        }
+        UnloadImage(key);
+    }
+    Image image = GenImageColor(width, height, BLACK);
+    ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    m_images[key] = image;
+    return m_images.at(key);
+}
+
 std::vector<std::vector<uint32_t>> ImageMgr::Pixels(const std::string &file)
 {
     std::vector<std::vector<uint32_t>> result;
@@ -48,6 +66,7 @@ void ImageMgr::UnloadImage(const std::string &file)
     if(it != m_images.end() && it->second.data != nullptr)
     {
         ::UnloadImage(it->second);
+        m_images.erase(it);
     }
 }
 
@@ -57,6 +76,7 @@ void ImageMgr::UnloadTexture(const std::string &file)
     if (it != m_textures.end() && it->second.id != 0)
     {
         ::UnloadTexture(it->second);
+        m_textures.erase(it);
     }
 }
 
@@ -75,6 +95,7 @@ void ImageMgr::UnloadAllImages()
             ::UnloadImage(p.second);
         }
     }
+    m_images.clear();
 }
 
 void ImageMgr::UnloadAllTextures()
@@ -86,6 +107,7 @@ void ImageMgr::UnloadAllTextures()
             ::UnloadTexture(p.second);
         }
     }
+    m_textures.clear();
 }
 
 Image &ImageMgr::LoadMutable(const std::string &file)

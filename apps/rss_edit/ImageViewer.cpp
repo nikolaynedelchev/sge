@@ -18,11 +18,7 @@ void ImageViewer::SetImage(const std::string &imageFile)
     m_scale = {1.0f, 1.0f};
     m_scaleStep = {0.0f, 0.0f};
     m_scaleTarget = m_scale;
-}
-
-void ImageViewer::SetBackground(const std::string &imageFile)
-{
-    m_backgroundTexture = m_imgMgr->Texture(imageFile);
+    GenerateBackground();
 }
 
 void ImageViewer::EnableZoom(bool isEnabled)
@@ -43,6 +39,43 @@ void ImageViewer::SetScale(Vector2 scale)
     Vector2 newRelativeImagePointScaled = m_zoomAnchorRelativeToImage * scale;
     m_offset = m_zoomAnchorRelativeToWindow - newRelativeImagePointScaled;
     m_scale = scale;
+}
+
+void ImageViewer::GenerateBackground()
+{
+    static constexpr int width = 64;
+    static constexpr int height = 64;
+    static constexpr int blockSz = 32;
+
+    auto image = m_imgMgr->Create(64, 64, "img_viewer_background");
+    Color *pixels = (Color *)image.data;
+    for (int y = 0; y < height; y++)
+    {
+        bool yOdd = (y / blockSz) % 2;
+        bool y2Odd = (y % blockSz) % 2;
+        for (int x = 0; x < width; x++)
+        {
+            bool xOdd = (x / blockSz) % 2;
+            bool x2Odd = (x % blockSz) % 2;
+
+            int index = y * width + x;
+            Color c;
+            c.a = 200;
+            if (xOdd == yOdd)
+            {
+                c.r = (x2Odd == y2Odd) ? 50 : 60;
+                c.g = (x2Odd == y2Odd) ? 30 : 40;
+                c.b = (x2Odd == y2Odd) ? 10 : 20;
+            }
+            else
+            {
+                c.r = (x2Odd == y2Odd) ? 10 : 20;
+                c.g = (x2Odd == y2Odd) ? 30 : 40;
+                c.b = (x2Odd == y2Odd) ? 50 : 60;
+            }
+            pixels[index] = c;
+        }
+    }
 }
 
 void ImageViewer::FitToViewArea()
@@ -113,7 +146,7 @@ void ImageViewer::Draw()
 
     Rectangle dest = Rect(m_offset, Vec(m_originalTexture.width, m_originalTexture.height) * m_scale);
 
-    DrawTexturePro(m_backgroundTexture, max, max, {0.0f, 0.0f}, 0.0f, WHITE);
+    DrawTexturePro(m_imgMgr->Texture("img_viewer_background"), max, max, {0.0f, 0.0f}, 0.0f, WHITE);
     DrawTexturePro(m_originalTexture, source, dest, {0.0f, 0.0f}, 0.0f, WHITE);
 
     if (m_decorator)

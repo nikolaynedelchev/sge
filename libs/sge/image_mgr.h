@@ -11,6 +11,7 @@ namespace ndn::sge
     {
     public:
         const Image& Load(const std::string& file);
+        Image& Create(int width, int height, const std::string& key);
         std::vector<std::vector<uint32_t>> Pixels(const std::string& file);
         const Texture2D& Texture(const std::string& file);
 

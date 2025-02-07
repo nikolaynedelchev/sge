@@ -105,7 +105,6 @@ int RssEdit::Run()
     m_textEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::Lua());
 
     m_imgViewer.SetImageMgr(s_imgMgr);
-    m_imgViewer.SetBackground(s_emptyBackground);
     m_imgViewer.SetImage(s_testImg);
     m_imgViewer.SetDecorator([](Vector2 zoom, Vector2 offset){
 
@@ -177,7 +176,6 @@ void RssEdit::DrawRssBrowser()
         int height = 64;
         int blockSz = 32;
         Image image = GenImageColor(width, height, BLACK);
-
         ImageFormat(&image, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
         Color *pixels = (Color *)image.data;
         for (int y = 0; y < height; y++)

@@ -14,7 +14,6 @@ class ImageViewer
 public:
     void SetImageMgr(std::shared_ptr<sge::ImageMgr>);
     void SetImage(const std::string& imageFile);
-    void SetBackground(const std::string& imageFile);
     void EnableZoom(bool isEnabled);
     void SetDecorator(std::function<void(Vector2 zoom, Vector2 offset)> decorator);
     void FitToViewArea();
@@ -25,6 +24,7 @@ public:
 
 private:
     void SetScale(Vector2 scale);
+    void GenerateBackground();
     bool m_isZoomEnabled;
 
     Vector2 m_offset = {0.0f, 0.0f};
@@ -38,7 +38,6 @@ private:
     Vector2 m_zoomAnchorRelativeToImage;
     Vector2 m_zoomAnchorRelativeToWindow;
     std::shared_ptr<sge::ImageMgr> m_imgMgr;
-    Texture2D m_backgroundTexture;
 };
 
 }
