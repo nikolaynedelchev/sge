@@ -44,17 +44,6 @@ struct Sound
 };
 std::string format_as(const Sound& s);
 
-struct Resources
-{
-    std::map<std::string, Sprite> sprites;
-    std::map<std::string, SpriteArray> spriteArrays;
-    std::map<std::string, Animation> animations;
-    std::map<std::string, Sound> sounds;
-
-    void Add(const Resources&);
-};
-std::string format_as(const Resources& r);
-
 struct DrawCommand
 {
     int x = 0;
@@ -77,6 +66,19 @@ std::string format_as(const Command& comm);
 
 using Script = std::vector<Command>;
 std::string format_as(const Script& s);
+
+struct Resources
+{
+    std::map<std::string, Sprite> sprites;
+    std::map<std::string, SpriteArray> spriteArrays;
+    std::map<std::string, Animation> animations;
+    std::map<std::string, Sound> sounds;
+    std::map<std::string, Script> scripts;
+    std::map<std::string, Command> commands;
+
+    void Add(const Resources&);
+};
+std::string format_as(const Resources& r);
 
 Resources LoadFromLuaGenerator(const std::string& luaGeneratorScript);
 SpriteArray AutoSprites(const std::vector<std::vector<uint32_t>>& imagePixels);

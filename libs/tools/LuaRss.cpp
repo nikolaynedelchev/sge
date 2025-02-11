@@ -83,6 +83,46 @@ function Animation(input)
     return animation
 end
 
+function DrawCmd(input)
+    local drawCmd = {}
+    drawCmd.resource_type = "draw_command"
+    drawCmd.x = input.x or 0
+    drawCmd.y = input.y or 0
+    drawCmd.spriteKey = input.spriteKey or ""
+    drawCmd.spriteArrayKey = input.spriteArrayKey or ""
+    drawCmd.spriteArrayIdx = input.spriteArrayIdx or 0
+
+    return drawCmd
+end
+
+function PlayCmd(input)
+    local playCmd = {}
+    playCmd.resource_type = "play_command"
+    playCmd.x = input.x or 0
+    playCmd.y = input.y or 0
+    playCmd.animationKey = input.animationKey or ""
+
+    return playCmd
+end
+
+function Script(input)
+    local script = {}
+    script.resource_type = "script"
+
+    script.commands = {}
+    if input.commands then
+        for i, comm in ipairs(input.commands) do
+            script.commands[i] = comm
+        end
+    end
+
+    function script:Add(comm)
+        table.insert(self.commands, comm)
+        return self
+    end
+    return script
+end
+
 )";
 
 template<typename T>
@@ -161,8 +201,8 @@ Opt<Sprite> ReadSprite(ParserCtx& ctx, lua_State* luaState)
     catch (...)
     {
         fmt::println(stderr, "Sprite not complete");
-        return {};
     }
+    return {};
 }
 
 Opt<SpriteArray> ReadSpriteArray(ParserCtx& ctx, lua_State* luaState)
@@ -182,8 +222,9 @@ Opt<SpriteArray> ReadSpriteArray(ParserCtx& ctx, lua_State* luaState)
     }
     catch (...)
     {
-        return {};
+        fmt::println(stderr, "SpriteArray not complete");
     }
+    return {};
 }
 
 Opt<Animation> ReadAnimation(ParserCtx& ctx, lua_State* luaState)
@@ -201,8 +242,9 @@ Opt<Animation> ReadAnimation(ParserCtx& ctx, lua_State* luaState)
     }
     catch (...)
     {
-        return {};
+        fmt::println(stderr, "Animation not complete");
     }
+    return {};
 }
 
 Opt<Sound> ReadSound(ParserCtx& ctx, lua_State* luaState)
@@ -216,11 +258,12 @@ Opt<Sound> ReadSound(ParserCtx& ctx, lua_State* luaState)
     }
     catch (...)
     {
-        return {};
+        fmt::println(stderr, "Sound complete");
     }
+    return {};
 }
 
-Opt<DrawCommand> ReadDrawCommand(ParserCtx& ctx, lua_State* luaState)
+Opt<Command> ReadDrawCommand(ParserCtx& ctx, lua_State* luaState)
 {
     try
     {
@@ -235,11 +278,11 @@ Opt<DrawCommand> ReadDrawCommand(ParserCtx& ctx, lua_State* luaState)
     catch (...)
     {
         fmt::println(stderr, "DrawCommand not complete");
-        return {};
     }
+    return {};
 }
 
-Opt<PlayCommand> ReadPlayCommand(ParserCtx& ctx, lua_State* luaState)
+Opt<Command> ReadPlayCommand(ParserCtx& ctx, lua_State* luaState)
 {
     try
     {
@@ -252,8 +295,52 @@ Opt<PlayCommand> ReadPlayCommand(ParserCtx& ctx, lua_State* luaState)
     catch (...)
     {
         fmt::println(stderr, "AnimationCommand not complete");
+    }
+    return {};
+}
+
+Opt<Command> ReadCommand(ParserCtx& ctx, lua_State* luaState)
+{
+    try
+    {
+        auto commType = ReadTableString(luaState,   "resource_type").value();
+        if (commType == "draw_command")
+        {
+            return ReadDrawCommand(ctx, luaState);
+        }
+        else if (commType == "play_command")
+        {
+            return ReadPlayCommand(ctx, luaState);
+        }
         return {};
     }
+    catch (...)
+    {
+        fmt::println(stderr, "AnimationCommand not complete");
+    }
+    return {};
+}
+
+Opt<Script> ReadScript(ParserCtx& ctx, lua_State* luaState)
+{
+    try
+    {
+        Script array;
+        IterateTableArray(luaState, "commands",
+        [&array, &ctx, luaState](int idx){
+            auto comm = ReadCommand(ctx, luaState);
+            if (comm.has_value())
+            {
+                array.push_back(comm.value());
+            }
+        });
+        return array;
+    }
+    catch (...)
+    {
+        fmt::println(stderr, "Script not complete");
+    }
+    return {};
 }
 
 void HandleTable(ParserCtx& ctx, const std::string& tableName, lua_State* luaState)
@@ -293,6 +380,30 @@ void HandleTable(ParserCtx& ctx, const std::string& tableName, lua_State* luaSta
             if (soundOpt.has_value())
             {
                 ctx.allResources.sounds[tableName] = soundOpt.value();
+            }
+        }
+        else if(rssType == "script")
+        {
+            auto scriptOpt = ReadScript(ctx, luaState);
+            if (scriptOpt.has_value())
+            {
+                ctx.allResources.scripts[tableName] = scriptOpt.value();
+            }
+        }
+        else if(rssType == "draw_command")
+        {
+            auto cmdOpt = ReadDrawCommand(ctx, luaState);
+            if (cmdOpt.has_value())
+            {
+                ctx.allResources.commands[tableName] = cmdOpt.value();
+            }
+        }
+        else if(rssType == "play_command")
+        {
+            auto cmdOpt = ReadPlayCommand(ctx, luaState);
+            if (cmdOpt.has_value())
+            {
+                ctx.allResources.commands[tableName] = cmdOpt.value();
             }
         }
         else
@@ -395,6 +506,10 @@ void Resources::Add(const Resources &rss)
     {
         sounds[p.first] = p.second;
     }
+    for(const auto& p : rss.scripts)
+    {
+        scripts[p.first] = p.second;
+    }
 }
 
 std::string format_as(const Sprite &s)
@@ -447,6 +562,16 @@ std::string format_as(const Resources &r)
     for(const auto& p : r.sounds)
     {
         str += fmt::format("key: {}, sound: {}\n", p.first, p.second);
+    }
+    str += "Scripts:\n";
+    for(const auto& p : r.scripts)
+    {
+        str += fmt::format("key: {}, script: {}\n", p.first, p.second);
+    }
+    str += "Commands:\n";
+    for(const auto& p : r.commands)
+    {
+        str += fmt::format("key: {}, command: {}\n", p.first, p.second);
     }
     return str + "\n";
 }
