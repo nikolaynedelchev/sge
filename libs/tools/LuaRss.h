@@ -4,6 +4,7 @@
 #include <vector>
 #include <fmt/core.h>
 #include <functional>
+#include <variant>
 
 namespace ndn::tools::rss_loader
 {
@@ -53,6 +54,29 @@ struct Resources
     void Add(const Resources&);
 };
 std::string format_as(const Resources& r);
+
+struct DrawCommand
+{
+    int x = 0;
+    int y = 0;
+    std::string spriteKey;
+    std::pair<std::string, int> spriteArray;
+};
+std::string format_as(const DrawCommand& comm);
+
+struct PlayCommand
+{
+    int x = 0;
+    int y = 0;
+    std::string animationKey;
+};
+std::string format_as(const PlayCommand& comm);
+
+using Command = std::variant<DrawCommand, PlayCommand>;
+std::string format_as(const Command& comm);
+
+using Script = std::vector<Command>;
+std::string format_as(const Script& s);
 
 Resources LoadFromLuaGenerator(const std::string& luaGeneratorScript);
 SpriteArray AutoSprites(const std::vector<std::vector<uint32_t>>& imagePixels);

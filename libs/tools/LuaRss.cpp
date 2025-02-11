@@ -105,7 +105,7 @@ void IterateTableArray(lua_State* luaState, const char* arrayName, const std::fu
 
     if (!lua_istable(luaState, -1))
     {
-        lua_pop(luaState, 1);  // Махаме ненужното
+        lua_pop(luaState, 1);
         return;
     }
     IterateArray(luaState, f);
@@ -217,7 +217,44 @@ Opt<Sound> ReadSound(ParserCtx& ctx, lua_State* luaState)
     catch (...)
     {
         return {};
-    }}
+    }
+}
+
+Opt<DrawCommand> ReadDrawCommand(ParserCtx& ctx, lua_State* luaState)
+{
+    try
+    {
+        DrawCommand comm;
+        comm.x = ReadTableNum<int>(luaState,                    "x").value();
+        comm.y = ReadTableNum<int>(luaState,                    "y").value();
+        comm.spriteKey = ReadTableString(luaState,              "spriteKey").value();
+        comm.spriteArray.first = ReadTableString(luaState,      "spriteArrayKey").value();
+        comm.spriteArray.second = ReadTableNum<int>(luaState,   "spriteArrayIdx").value();
+        return comm;
+    }
+    catch (...)
+    {
+        fmt::println(stderr, "DrawCommand not complete");
+        return {};
+    }
+}
+
+Opt<PlayCommand> ReadPlayCommand(ParserCtx& ctx, lua_State* luaState)
+{
+    try
+    {
+        PlayCommand comm;
+        comm.x = ReadTableNum<int>(luaState,            "x").value();
+        comm.y = ReadTableNum<int>(luaState,            "y").value();
+        comm.animationKey = ReadTableString(luaState,   "animationKey").value();
+        return comm;
+    }
+    catch (...)
+    {
+        fmt::println(stderr, "AnimationCommand not complete");
+        return {};
+    }
+}
 
 void HandleTable(ParserCtx& ctx, const std::string& tableName, lua_State* luaState)
 {
@@ -476,6 +513,49 @@ SpriteArray AutoSprites(const std::vector<std::vector<uint32_t>>& imagePixels)
                 s.scale = 1.0;
             }
         }
+    }
+    return result;
+}
+
+std::string format_as(const DrawCommand &comm)
+{
+    std::string str = fmt::format("X: {}, Y: {}, ", comm.x, comm.y);
+    if (!comm.spriteKey.empty())
+    {
+        str += fmt::format("sprite: {}", comm.spriteKey);
+    }
+    else if (!comm.spriteArray.first.empty())
+    {
+        str += fmt::format("spriteArray: {}, idx: {}", comm.spriteArray.first, comm.spriteArray.second);
+    }
+    return str;
+}
+
+std::string format_as(const PlayCommand &comm)
+{
+    return fmt::format("X: {}, Y: {}, animation: {}", comm.x, comm.y, comm.animationKey);
+}
+
+std::string format_as(const Command &comm)
+{
+    if (std::holds_alternative<DrawCommand>(comm))
+    {
+        const DrawCommand& drawCmd = std::get<DrawCommand>(comm);
+        return fmt::format("draw cmd: {}", drawCmd);
+    }
+    else if (std::holds_alternative<PlayCommand>(comm))
+    {
+        const PlayCommand& playCmd = std::get<PlayCommand>(comm);
+        return fmt::format("play cmd: {}", playCmd);
+    }
+}
+
+std::string format_as(const Script &s)
+{
+    std::string result;
+    for(const auto& c : s)
+    {
+        result += fmt::format("{}", c);
     }
     return result;
 }
