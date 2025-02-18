@@ -30,4 +30,4 @@ add_subdirectory(libs/sge)
 add_subdirectory(apps/dev_app)
 add_subdirectory(apps/pong)
 add_subdirectory(apps/rss_edit)
-
+add_subdirectory(apps/game_set)

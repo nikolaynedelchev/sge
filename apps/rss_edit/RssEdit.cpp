@@ -30,7 +30,7 @@ static tools::rss_loader::Resources s_resources;
 static std::string s_editorSelectedText;
 static std::shared_ptr<sge::ImageMgr> s_imgMgr;
 
-
+//static std::string s_testImg="C:/Users/nikolay.nedelchev/Documents/CPP_Projects/assets/2d-shooter/New_All_Fire_Bullet_Pixel_16x1/All_Fire_Bullet_Pixel_16x16_01.png";
 //static std::string s_testImg = "/home/nikolay/tmp/test_png_transp.png";
 static std::string s_testImg = "/home/nikolay/Downloads/2dShooterAssets/Foozle_2DS0012_Void_EnemyFleet_1/Kla'ed/Weapons/PNGs/Kla'ed - Frigate - Weapons.png";
 static std::string s_emptyBackground = "/home/nikolay/tmp/empty_background.png";
