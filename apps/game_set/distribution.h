@@ -1,6 +1,7 @@
 #pragma once
 #include <cinttypes>
 #include <vector>
+#include <cstddef>
 namespace ndn::game_set
 {
 
@@ -13,8 +14,7 @@ public:
     void AddByElementIndex(size_t elementIdx, int count = 1);
 
     int ElementsCount() const;
-    void TakeByElementNumber(int elementNumber, int count);
-    void AddByElementNumber(int elementNumber, int count);
+    size_t TakeByElementNumber(int elementNumber, int count);
 
     std::vector<int> Dump() const;
 

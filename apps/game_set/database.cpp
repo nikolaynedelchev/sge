@@ -13,7 +13,7 @@ static inline void ThrowIf(bool cond, const char* msg)
     }
 }
 
-std::vector<int> Database::InitAndGetRecoveryGames(int workerId, uint64_t snapshotId)
+std::vector<Transaction> Database::InitAndGetRecoveryTransactions(int workerId, uint64_t pageId)
 {
     ThrowIf(m_file != nullptr, "The service is already inited");
 
@@ -22,21 +22,20 @@ std::vector<int> Database::InitAndGetRecoveryGames(int workerId, uint64_t snapsh
 
     m_file = fopen(m_fileName.c_str(), "rb");
 
-    std::vector<int> result;
+    std::vector<Transaction> result;
     m_gamesInDatabase = 0;
-    m_lastSnapshot = snapshotId;
+    m_pageId = pageId;
 
     if(m_file != nullptr)
     {
-        int gameWin = 0;
-        uint64_t gameSnapshotId = 0;
+        Transaction tr;
 
-        while (fscanf(m_file, "%llu %d", &gameSnapshotId, &gameWin) == 2)
+        while (fscanf(m_file, "%llu %llu %d", &tr.transactionId, &tr.pageId, &tr.win) == 2)
         {
             m_gamesInDatabase++;
-            if (gameSnapshotId == snapshotId)
+            if (tr.pageId == pageId)
             {
-                result.push_back(gameWin);
+                result.push_back(tr);
             }
         }
         fclose(m_file);
@@ -45,12 +44,12 @@ std::vector<int> Database::InitAndGetRecoveryGames(int workerId, uint64_t snapsh
     return result;
 }
 
-void Database::SaveGame(int win, uint64_t snapshotId)
+void Database::SaveGame(Transaction tr)
 {
     m_gamesInDatabase++;
 
     if (m_gamesInDatabase > 100'000 &&
-        m_lastSnapshot != snapshotId)
+        m_pageId != tr.pageId)
     {
         // the file is too big
         // this is the first entry from the new snapshot (m_lastSnapshot != snapshotId)
@@ -59,8 +58,8 @@ void Database::SaveGame(int win, uint64_t snapshotId)
         m_gamesInDatabase = 0;
     }
 
-    m_lastSnapshot = snapshotId;
-    fprintf(m_file, "%llu %d\n", snapshotId, win);
+    m_pageId = tr.pageId;
+    fprintf(m_file, "%llu %llu %d\n", tr.transactionId, tr.pageId, tr.win);
     fflush(m_file);
 }
 

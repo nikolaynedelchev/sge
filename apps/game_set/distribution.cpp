@@ -22,20 +22,16 @@ int Distribution::ElementsCount() const
     return m_tree[0];
 }
 
-void Distribution::TakeByElementNumber(int elementNumber, int count)
-{
-    return AddByElementNumber(elementNumber, -count);
-}
-
-void Distribution::AddByElementNumber(int elementNumber, int count)
+size_t Distribution::TakeByElementNumber(int elementNumber, int count)
 {
     size_t step = m_initialBitmask;
     size_t idx = 0;
     int sum = 0;
+    size_t gameIdx = 0;
 
     if (step >= 1)
     {
-        m_tree[idx] += count;
+        m_tree[idx] -= count;
     }
     while(step > 1)
     {
@@ -43,16 +39,20 @@ void Distribution::AddByElementNumber(int elementNumber, int count)
         {
             // left branch
             idx++;
+            gameIdx <<= 1;
         }
         else
         {
             // right branch
             sum += m_tree[idx + 1];
             idx += step;
+            gameIdx <<= 1;
+            gameIdx |= 1;
         }
-        m_tree[idx] += count;
+        m_tree[idx] -= count;
         step /= 2;
     }
+
 }
 
 void Distribution::TakeByElementIndex(size_t elementIdx, int count)
