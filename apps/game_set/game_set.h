@@ -3,32 +3,36 @@
 #include <vector>
 #include "distribution.h"
 #include <mutex>
-#include <random>
-
+#include <map>
 namespace ndn::game_set
 {
 
 struct Game
 {
     bool isValid;
-    uint64_t snapshotId;
+    int snapshotId;
     int win;
 };
 
 class GameSet
 {
 public:
-    uint64_t InitAndGetSnapshotId();
+    int InitAndGetSnapshotId(const std::string& gameSetName, std::vector<int> paytable);
     void ResetGameSet(const std::vector<int>& gameset);
     void RecoverGames(const std::vector<Game>& games);
     Game DrawGame();
     size_t GetGameSetSize() const;
 
 private:
-    std::mt19937 m_rng;
+    void FlushGameSet();
+    void RecoverGameSet();
     Distribution m_dist;
     int m_gamesPlayed = 0;
-    uint64_t m_snapshotId = 0;
+    int m_snapshotId = 0;
+    std::vector<int> m_paytable;
+    std::map<int, size_t> m_idxByWin;
+    std::string m_name;
+    std::string m_fileName;
     mutable std::mutex m_locker;
 };
 

@@ -1,6 +1,7 @@
 #include "database.h"
 #include <string>
 #include <fmt/format.h>
+
 namespace ndn::game_set
 {
 
@@ -30,7 +31,7 @@ std::vector<Transaction> Database::InitAndGetRecoveryTransactions(int workerId, 
     {
         Transaction tr;
 
-        while (fscanf(m_file, "%llu %llu %d", &tr.transactionId, &tr.pageId, &tr.win) == 2)
+        while (fscanf(m_file, "%llu %llu %d", &tr.transactionId, &tr.pageId, &tr.win) > 0)
         {
             m_gamesInDatabase++;
             if (tr.pageId == pageId)

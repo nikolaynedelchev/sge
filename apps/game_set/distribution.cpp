@@ -8,7 +8,8 @@ void Distribution::Init(std::vector<int> elementsCounts)
     m_originalSize = elementsCounts.size();
     size_t pow2 = 1;
     while(pow2 < elementsCounts.size()) pow2 *= 2;
-    m_tree.resize(pow2 * 2 - 1, 0);
+    m_tree.resize(pow2 * 2 - 1);
+    for(auto& v : m_tree) v = 0;
     for(size_t idx = 0; idx < elementsCounts.size(); idx++)
     {
         AddByElementIndex(idx, elementsCounts[idx]);
