@@ -33,12 +33,12 @@ int GameSet::InitAndGetSnapshotId(const std::string& gameSetName, std::vector<in
     return m_snapshotId;
 }
 
-void GameSet::ResetGameSet(const std::vector<int> &gameset)
+void GameSet::ResetGameSet(const std::vector<int> &gamesetDistribution)
 {
     GUARD_THIS_FUNCTION();
     m_gamesPlayed = 0;
     m_snapshotId++;
-    m_dist.Init(gameset);
+    m_dist.Init(gamesetDistribution);
     FlushGameSet();
 }
 
@@ -69,8 +69,8 @@ Game GameSet::DrawGame()
     }
     m_gamesPlayed++;
     size_t gameNum = tools::Rng::GetRandom(count - 1);
-    m_dist.TakeByElementNumber(gameNum, 1);
-    game.win = m_paytable[gameNum];
+    size_t gameIdx = m_dist.TakeByElementNumber(gameNum, 1);
+    game.win = m_paytable[gameIdx];
     game.isValid = true;
     if (m_gamesPlayed > 1'000'000)
     {

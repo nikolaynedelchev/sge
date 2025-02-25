@@ -1,5 +1,5 @@
 #include "Stopwatch.h"
-
+#include <thread>
 
 namespace ndn::tools
 {
@@ -39,6 +39,11 @@ int64_t Stopwatch::Reset()
     auto result = Measure();
     *this = Stopwatch();
     return result;
+}
+
+void Stopwatch::SleepForMs(uint32_t ms)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
 const Stopwatch &Stopwatch::GetGlobalTimer()

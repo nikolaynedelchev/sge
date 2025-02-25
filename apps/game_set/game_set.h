@@ -18,7 +18,7 @@ class GameSet
 {
 public:
     int InitAndGetSnapshotId(const std::string& gameSetName, std::vector<int> paytable);
-    void ResetGameSet(const std::vector<int>& gameset);
+    void ResetGameSet(const std::vector<int>& gamesetDistribution);
     void RecoverGames(const std::vector<Game>& games);
     Game DrawGame();
     size_t GetGameSetSize() const;

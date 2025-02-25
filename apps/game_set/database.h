@@ -17,12 +17,14 @@ struct Transaction
 
 class Database
 {
+public:
     std::vector<Transaction> InitAndGetRecoveryTransactions(int workerId, uint64_t pageId);
     void SaveGame(Transaction);
 
 private:
     void OpenFile();
     void ResetFile();
+    void CloseFile();
     int m_id;
     int m_gamesInDatabase = 0;
     FILE* m_file = nullptr;

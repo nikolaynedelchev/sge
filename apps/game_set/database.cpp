@@ -39,7 +39,7 @@ std::vector<Transaction> Database::InitAndGetRecoveryTransactions(int workerId, 
                 result.push_back(tr);
             }
         }
-        fclose(m_file);
+        CloseFile();
     }
     OpenFile();
     return result;
@@ -78,11 +78,17 @@ void Database::ResetFile()
 {
     if (m_file != nullptr)
     {
-        fclose(m_file);
+        CloseFile();
     }
 
     m_file = fopen(m_fileName.c_str(), "wb");
     ThrowIf(m_file == nullptr, "Error opening file for clearing");
+}
+
+void Database::CloseFile()
+{
+    fclose(m_file);
+    m_file = nullptr;
 }
 
 }

@@ -53,7 +53,7 @@ size_t Distribution::TakeByElementNumber(int elementNumber, int count)
         m_tree[idx] -= count;
         step /= 2;
     }
-
+    return gameIdx;
 }
 
 void Distribution::TakeByElementIndex(size_t elementIdx, int count)
@@ -63,13 +63,16 @@ void Distribution::TakeByElementIndex(size_t elementIdx, int count)
 
 void Distribution::AddByElementIndex(size_t elementIdx, int count)
 {
+
+    // NE RABOTI
     size_t step = m_initialBitmask;
     size_t idx = 0;
-    while(step >= 1)
+    m_tree[0] += count;
+    while(step > 1)
     {
-        m_tree[idx] += count;
         idx += (elementIdx & step) ? step : 1;
         step /= 2;
+        m_tree[idx] += count;
     }
 }
 

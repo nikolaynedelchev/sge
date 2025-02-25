@@ -15,6 +15,8 @@ public:
     void Resume();
     int64_t Reset(); // returns milliseconds
 
+    static void SleepForMs(uint32_t ms);
+
     static const Stopwatch& GetGlobalTimer();
 
 private:
