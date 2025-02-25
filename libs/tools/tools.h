@@ -3,7 +3,17 @@
 #include <filesystem>
 #include <vector>
 #include <regex>
+#include <memory>
 
+namespace ndn
+{
+template<typename T>
+using Ptr = std::shared_ptr<T>;
+
+template<typename T>
+using UPtr = std::unique_ptr<T>;
+
+}
 namespace ndn::tools
 {
 void test_me();

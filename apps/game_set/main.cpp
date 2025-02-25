@@ -13,6 +13,51 @@ int main(){return ::ndn::game_set::Main();}
 namespace ndn::game_set
 {
 
+void SaveTestFile(const char* fileName)
+{
+    int s = tools::Rng::GetRandom(1000000);
+    std::vector<int> mem;
+    mem.reserve(256);
+    for(int i = 0; i < 256; i++)
+    {
+        mem.push_back(i + s);
+    }
+
+    auto file = fopen(fileName, "wb");
+    auto written = fwrite(&mem.front(), sizeof(mem.front()) * mem.size(), 1, file);
+    fflush(file);
+    fclose(file);
+}
+
+void TestFileSpeed()
+{
+    static int tests = 5000;
+    auto test = [](const char* fileName)
+    {
+        fmt::println("Test file save performance...");
+        for(int i = 0; i < tests; i++)
+        {
+            SaveTestFile(fileName);
+        }
+    };
+
+    tools::Stopwatch testSw;
+    auto t1 = std::thread([&test](){test("test_file_1.bin");});
+    auto t2 = std::thread([&test](){test("test_file_2.bin");});
+    auto t3 = std::thread([&test](){test("test_file_3.bin");});
+    auto t4 = std::thread([&test](){test("test_file_4.bin");});
+    auto t5 = std::thread([&test](){test("test_file_5.bin");});
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+    t5.join();
+
+    auto ms = testSw.Measure();
+    fmt::println("Speed: {}", (double(tests * 5)*1000.0) / (double(ms)));
+}
+
 static void Cleanup()
 {
     namespace fs = std::filesystem;
@@ -62,6 +107,9 @@ void Test()
 
 int Main()
 {
+    // TestFileSpeed();
+    // return 0;
+
     if (true)
     {
         Cleanup();
