@@ -30,14 +30,21 @@ public:
         m_client = m_loop->resource<uvw::tcp_handle>();
         m_client->on<uvw::connect_event>([this](const uvw::connect_event& connectEvent, uvw::tcp_handle & client) {
             OnNewConnection(connectEvent, client);
-            m_connected = false;
-            m_client->close();
+        });
+
+        m_client->on<uvw::close_event>([this](const uvw::close_event& e, uvw::tcp_handle& handle){
+            m_loop->walk([](auto& handle){
+                handle.close();
+            });
+            m_loop->stop();
         });
 
         m_async = m_loop->resource<uvw::async_handle>();
         m_async->on<uvw::async_event>([this, n = 'a'](const uvw::async_event& event, uvw::async_handle& handle) mutable{
             if (true == m_shoudClose)
             {
+                m_connected = false;
+                m_async->close();
                 m_client->close();
                 return;
             }
@@ -52,43 +59,45 @@ public:
                 data[i] = n;
             }
             m_client->write(std::move(data), 8);
-
         });
 
         m_client->connect("127.0.0.1", 12345);
 
         auto timer = std::thread([&](){
-            return;
+            tools::Stopwatch::SleepForMs(500);
             for(int i = 0; i < MSG_COUNT; i++)
             {
-                tools::Stopwatch::SleepForMs(2);
+                if (i % 10 == 0)
+                {
+                    tools::Stopwatch::SleepForMs(1);
+                }
                 m_async->send();
+                if (i % 300 == 0)
+                {
+                    fmt::println("{} / {}", i, MSG_COUNT);
+                }
+            }
+
+            while(m_replies != MSG_COUNT)
+            {
+                tools::Stopwatch::SleepForMs(100);
+                fmt::println("wait: {}", m_replies.load() );
             }
             m_shoudClose.store(true);
             m_async->send();
         });
         m_loop->run();
-        // m_async.reset();
-        // m_client.reset();
-        // m_loop.reset();
+        timer.join();
         fmt::println("Client closed");
     }
 
-    void OnNewConnection(const uvw::connect_event& connectEvent, uvw::tcp_handle & server)
+    void OnNewConnection(const uvw::connect_event& connectEvent, uvw::tcp_handle & handle)
     {
-        server.on<uvw::close_event>([this](const uvw::close_event & closeEvent, uvw::tcp_handle & client) {
-            m_connected = false;
-            m_loop->walk([](auto& handle){
-                handle.close();
-            });
-            m_loop->stop();
-        });
-
-        server.on<uvw::data_event>([this, ctx = ServerCtx()](const uvw::data_event &event, uvw::tcp_handle &server) mutable {
+        handle.on<uvw::data_event>([this, ctx = ServerCtx()](const uvw::data_event &event, uvw::tcp_handle &server) mutable {
             OnDataEvent(event, server, ctx);
         });
 
-        server.read();
+        handle.read();
         m_connected = true;
     }
 
@@ -113,6 +122,7 @@ public:
         for(const auto& msg : ctx.msgs)
         {
             t += msg.size();
+            m_replies.fetch_add(1);
         }
         ctx.msgs.clear();
     }
@@ -121,6 +131,7 @@ public:
     Ptr<uvw::tcp_handle> m_client;
     Ptr<uvw::async_handle> m_async;
     std::atomic_bool m_shoudClose = false;
+    std::atomic_int m_replies = 0;
 };
 
 

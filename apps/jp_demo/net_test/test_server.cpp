@@ -31,41 +31,51 @@ public:
     {
         m_loop = uvw::loop::create();
         m_server = m_loop->resource<uvw::tcp_handle>();
-        m_server->on<uvw::listen_event>([this](const uvw::listen_event& listenEvent, uvw::tcp_handle & client) {
-            OnNewConnection(listenEvent, client);
+        m_server->on<uvw::listen_event>([this](const uvw::listen_event& listenEvent, uvw::tcp_handle &server) {
+            OnNewConnection(listenEvent, server);
+        });
+        m_server->on<uvw::close_event>([this](const uvw::close_event& e, uvw::tcp_handle& handle){
+            m_loop->walk([](auto& handle){
+                handle.close();
+            });
+            m_loop->stop();
         });
         m_server->bind("0.0.0.0", 12345);
         m_server->listen();
 
         m_async = m_loop->resource<uvw::async_handle>();
         m_async->on<uvw::async_event>([this](const uvw::async_event& ev, uvw::async_handle& handle){
-            m_loop->walk([](auto& handle){
-                handle.close();
-            });
-            m_loop->stop();
+            m_async->close();
+            m_server->close();
         });
         m_loop->run();
         fmt::println("Server closed");
     }
 
-    void OnNewConnection(const uvw::listen_event& listenEvent, uvw::tcp_handle & client)
+    void OnNewConnection(const uvw::listen_event& listenEvent, uvw::tcp_handle & server)
     {
-        m_server->accept(client);
-        std::cout << "Client connected\n";
+        auto client = server.parent().resource<uvw::tcp_handle>();
 
-        client.on<uvw::close_event>([](const uvw::close_event & closeEvent, uvw::tcp_handle & client) {
-            //std::cout << "Client disconnected\n";
+        client->on<uvw::close_event>([c = client](const uvw::close_event & closeEvent, uvw::tcp_handle & client) mutable {
+            c.reset();
         });
 
-        client.on<uvw::data_event>([this, ctx = ClientCtx()](const uvw::data_event &event, uvw::tcp_handle &client) mutable {
+        client->on<uvw::data_event>([this, ctx = ClientCtx()](const uvw::data_event &event, uvw::tcp_handle &client) mutable {
             OnDataEvent(event, client, ctx);
         });
 
-        client.read();
+        m_server->accept(*client);
+        std::cout << "Client connected\n";
+        client->read();
     }
 
     void OnDataEvent(const uvw::data_event &event, uvw::tcp_handle &client, ClientCtx& ctx)
     {
+        if (event.length > 8)
+        {
+            int aa = 34;
+            aa++;
+        }
         for (size_t i = 0; i < event.length; i++)
         {
             ctx.notReady.push_back(event.data[i]);
