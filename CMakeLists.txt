@@ -20,6 +20,10 @@ include_directories(${CMAKE_SOURCE_DIR}/thirdparty/entt/src)
 add_subdirectory(thirdparty/raylib)
 add_subdirectory(thirdparty/builders)
 
+add_subdirectory(thirdparty/libuv)
+add_subdirectory(thirdparty/uvw)
+
+
 #include_directories(${CMAKE_SOURCE_DIR}/thirdparty/zep/include)
 #add_subdirectory(thirdparty/zep)
 
@@ -31,3 +35,4 @@ add_subdirectory(apps/dev_app)
 add_subdirectory(apps/pong)
 add_subdirectory(apps/rss_edit)
 add_subdirectory(apps/game_set)
+add_subdirectory(apps/jp_demo)
