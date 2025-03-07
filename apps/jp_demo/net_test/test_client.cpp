@@ -8,6 +8,7 @@
 #include <thread>
 #include <uvw.hpp>
 #include <chrono>
+#include <atomic>
 
 namespace ndn::jp_demo::net_test
 {
@@ -39,7 +40,6 @@ public:
             m_loop->stop();
         });
 
-        m_async = m_loop->resource<uvw::async_handle>();
         m_async->on<uvw::async_event>([this, n = 'a'](const uvw::async_event& event, uvw::async_handle& handle) mutable{
             if (true == m_shoudClose)
             {
@@ -63,8 +63,12 @@ public:
 
         m_client->connect("127.0.0.1", 12345);
 
-        auto timer = std::thread([&](){
-            tools::Stopwatch::SleepForMs(500);
+        m_timer = m_loop->resource<uvw::timer_handle>();
+        m_timer->on<uvw::timer_event>([this](const uvw::timer_event& e, uvw::timer_handle& h){
+
+        });
+        m_timer->start(uvw::timer_handle::time{5}, uvw::timer_handle::time{0});
+        auto timer2 = std::thread([&](){
             for(int i = 0; i < MSG_COUNT; i++)
             {
                 if (i % 10 == 0)
@@ -87,7 +91,7 @@ public:
             m_async->send();
         });
         m_loop->run();
-        timer.join();
+        timer2.join();
         fmt::println("Client closed");
     }
 
@@ -129,7 +133,7 @@ public:
     bool m_connected = false;
     Ptr<uvw::loop> m_loop;
     Ptr<uvw::tcp_handle> m_client;
-    Ptr<uvw::async_handle> m_async;
+    Ptr<uvw::timer_handle> m_timer;
     std::atomic_bool m_shoudClose = false;
     std::atomic_int m_replies = 0;
 };

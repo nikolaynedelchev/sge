@@ -15,6 +15,7 @@ using uint = unsigned;
 #define BIT(b) (1 << (b))
 #define SET_BIT(n, b) n |= BIT(b)
 #define CLR_BIT(n, b) n &= ~(BIT(b))
+#define IDX(r, c) ((r)*9+(c))
 
 uint8_t matrix[9*9] = // best 13, worst 30, av 18
 {
@@ -33,10 +34,9 @@ uint8_t matrix[9*9] = // best 13, worst 30, av 18
 
 struct
 {
-    uint16_t rows[9];
-    uint16_t columns[9];
-    uint16_t quadrants[9];
-}ctx;
+    uint16_t takenMask;
+    uint16_t freeCount;
+} cells[81];
 
 static inline uint BitsCount(uint16_t n) {
     n = n - ((n >> 1) & 0x5555);
@@ -48,26 +48,161 @@ static inline uint BitsCount(uint16_t n) {
 
 static inline void PutNumber(uint r, uint c, uint8_t n)
 {
-    auto q = M_TO_Q(r, c);
-    SET_BIT(ctx.rows[r], n);
-    SET_BIT(ctx.columns[c], n);
-    SET_BIT(ctx.quadrants[q], n);
-    matrix[r*9+c] = n;
+    int cellIdx = int(IDX(r,c));
+    uint quadR = (r/3)*3;
+    uint quadC = (c/3)*3;
+    int quadIdx = int(IDX(quadR,quadC));
+
+    // Fill quadrant
+    cells[quadIdx + 0 + 0].freeCount--;
+    SET_BIT(cells[quadIdx + 0 + 0].takenMask, n);
+
+    cells[quadIdx + 1].freeCount--;
+    SET_BIT(cells[quadIdx + 1 + 0].takenMask, n);
+
+    cells[quadIdx + 2].freeCount--;
+    SET_BIT(cells[quadIdx + 2 + 0].takenMask, n);
+
+    cells[quadIdx + 0 + 0].freeCount--;
+    SET_BIT(cells[quadIdx + 0 + 9].takenMask, n);
+
+    cells[quadIdx + 1].freeCount--;
+    SET_BIT(cells[quadIdx + 1 + 9].takenMask, n);
+
+    cells[quadIdx + 2].freeCount--;
+    SET_BIT(cells[quadIdx + 2 + 9].takenMask, n);
+
+    cells[quadIdx + 0 + 0].freeCount--;
+    SET_BIT(cells[quadIdx + 0 + 18].takenMask, n);
+
+    cells[quadIdx + 1].freeCount--;
+    SET_BIT(cells[quadIdx + 1 + 18].takenMask, n);
+
+    cells[quadIdx + 2].freeCount--;
+    SET_BIT(cells[quadIdx + 2 + 18].takenMask, n);
+
+    // Fill column up
+    int upperColIdx = int(IDX(quadR, c)) - 9;
+    while(upperColIdx >= 0)
+    {
+        cells[upperColIdx].freeCount--;
+        SET_BIT(cells[upperColIdx].takenMask, n);
+        upperColIdx -= 9;
+    }
+
+    // Fill column dn
+    int dnColIdx = int(IDX(quadR+2, c)) + 9;
+    while(dnColIdx < 81)
+    {
+        cells[dnColIdx].freeCount--;
+        SET_BIT(cells[dnColIdx].takenMask, n);
+        dnColIdx += 9;
+    }
+
+    // Fill row left
+    int lfRowIdx = int(IDX(r, quadC)) - 1;
+    while(lfRowIdx >= 0)
+    {
+        cells[lfRowIdx].freeCount--;
+        SET_BIT(cells[lfRowIdx].takenMask, n);
+        lfRowIdx--;
+    }
+
+    // Fill row right
+    int rgRowIdx = int(IDX(r, quadC + 2)) + 1;
+    while(rgRowIdx < 81)
+    {
+        cells[rgRowIdx].freeCount--;
+        SET_BIT(cells[rgRowIdx].takenMask, n);
+        rgRowIdx++;
+    }
+
+    matrix[cellIdx] = n;
 }
 
 static inline void RemoveNumber(uint r, uint c)
 {
-    auto q = M_TO_Q(r, c);
-    auto idx = r*9+c;
-    auto n = matrix[idx];
-    CLR_BIT(ctx.rows[r], n);
-    CLR_BIT(ctx.columns[c], n);
-    CLR_BIT(ctx.quadrants[q], n);
-    matrix[idx] = 0;
+    int cellIdx = int(IDX(r,c));
+    uint quadR = (r/3)*3;
+    uint quadC = (c/3)*3;
+    int quadIdx = int(IDX(quadR,quadC));
+    auto n = matrix[cellIdx];
+
+    // Fill quadrant
+    cells[quadIdx + 0 + 0].freeCount++;
+    CLR_BIT(cells[quadIdx + 0 + 0].takenMask, n);
+
+    cells[quadIdx + 1].freeCount++;
+    CLR_BIT(cells[quadIdx + 1 + 0].takenMask, n);
+
+    cells[quadIdx + 2].freeCount++;
+    CLR_BIT(cells[quadIdx + 2 + 0].takenMask, n);
+
+    cells[quadIdx + 0 + 0].freeCount++;
+    CLR_BIT(cells[quadIdx + 0 + 9].takenMask, n);
+
+    cells[quadIdx + 1].freeCount++;
+    CLR_BIT(cells[quadIdx + 1 + 9].takenMask, n);
+
+    cells[quadIdx + 2].freeCount++;
+    CLR_BIT(cells[quadIdx + 2 + 9].takenMask, n);
+
+    cells[quadIdx + 0 + 0].freeCount++;
+    CLR_BIT(cells[quadIdx + 0 + 18].takenMask, n);
+
+    cells[quadIdx + 1].freeCount++;
+    CLR_BIT(cells[quadIdx + 1 + 18].takenMask, n);
+
+    cells[quadIdx + 2].freeCount++;
+    CLR_BIT(cells[quadIdx + 2 + 18].takenMask, n);
+
+    // Fill column up
+    int upperColIdx = int(IDX(quadR, c)) - 9;
+    while(upperColIdx >= 0)
+    {
+        cells[upperColIdx].freeCount++;
+        CLR_BIT(cells[upperColIdx].takenMask, n);
+        upperColIdx -= 9;
+    }
+
+    // Fill column dn
+    int dnColIdx = int(IDX(quadR+2, c)) + 9;
+    while(dnColIdx < 81)
+    {
+        cells[dnColIdx].freeCount++;
+        CLR_BIT(cells[dnColIdx].takenMask, n);
+        dnColIdx += 9;
+    }
+
+    // Fill row left
+    int lfRowIdx = int(IDX(r, quadC)) - 1;
+    while(lfRowIdx >= 0)
+    {
+        cells[lfRowIdx].freeCount++;
+        CLR_BIT(cells[lfRowIdx].takenMask, n);
+        lfRowIdx--;
+    }
+
+    // Fill row right
+    int rgRowIdx = int(IDX(r, quadC + 2)) + 1;
+    while(rgRowIdx < 81)
+    {
+        cells[rgRowIdx].freeCount++;
+        CLR_BIT(cells[rgRowIdx].takenMask, n);
+        rgRowIdx++;
+    }
+
+    matrix[cellIdx] = 0;
 }
 
 static void InitCtx()
 {
+    for(uint i = 0; i < 81; i++)
+    {
+        cells[i].takenMask = 0;
+        cells[i].freeCount = 9;
+    }
+
     int idx = 0;
     for(uint r = 0; r < 9; r++)
     {
@@ -89,7 +224,6 @@ static void InitCtx()
             else
             {
                 matrix[idx] = 0;
-                RemoveNumber(r, c);
             }
             idx++;
         }

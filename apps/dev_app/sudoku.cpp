@@ -2,6 +2,9 @@
 #include <fmt/format.h>
 #include <string>
 #include <tools/Stopwatch.h>
+
+// https://dmoj.ca/problem/sudoku/rank/
+
 namespace ndn::sudoku
 {
 
